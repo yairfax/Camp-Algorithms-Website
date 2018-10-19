@@ -1,0 +1,25 @@
+{
+  "name": "camp-algorithms-website",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yairfax/Camp-Algorithms-Website.git"
+  },
+  "author": "Yair Fax",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yairfax/Camp-Algorithms-Website/issues"
+  },
+  "homepage": "https://github.com/yairfax/Camp-Algorithms-Website#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-handlebars": "^3.0.0",
+    "morgan": "^1.9.1",
+    "underscore": "^1.9.1"
+  }
+}
