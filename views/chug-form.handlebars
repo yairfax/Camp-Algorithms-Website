@@ -1,4 +1,10 @@
 <h1 style="text-align: center">Please fill out all of your chug preference information</h1>
+{{#if repeat}}
+<div class="alert alert-success" role="alert">
+  <h4 class="alert-heading">Response Recorded</h4>
+  <p>Your response for {{name}} was recorded, please enter another camper's info.</p>
+</div>
+{{/if}}
 <form method="POST" action="/chugim?session={{session.id}}">
 	<div class="form-group">
 		<label for="name" required>Name</label>

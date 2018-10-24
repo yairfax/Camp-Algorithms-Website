@@ -22,6 +22,21 @@ function getChugim(path) {
 	return chugim
 }
 
-module.exports = {
-	getChugim: getChugim
+function loadCamperPrefs(path) {
+	if (!fs.existsSync(path + "camper-prefs.json")) {
+		fs.writeFileSync(path + "camper-prefs.json", "{}")
+		return {}
+	}
+	return JSON.parse(fs.readFileSync(path + "camper-prefs.json"))
 }
+
+function writeCamperPrefs(obj, path) {
+	fs.writeFileSync(path + "camper-prefs.json", JSON.stringify(obj))
+}
+
+module.exports = {
+	getChugim: getChugim,
+	writeCamperPrefs: writeCamperPrefs,
+	loadCamperPrefs: loadCamperPrefs
+}
+

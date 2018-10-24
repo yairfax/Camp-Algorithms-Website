@@ -8,6 +8,10 @@ var app = express();
 var PORT = 3000;
 var _sessions = require('./sessions/sessions.json')
 var utils = require('./utils.js')
+var curSesh = {
+	prefs: {},
+	id: ""
+}
 
 //Handlebars stuff
 var hbs = exphbs.create({
@@ -41,13 +45,39 @@ app.get("/chugim", function(req, res) {
 		bunks: sessionObj.bunks,
 		chugim: utils.getChugim(sessionObj.path),
 		counter: [1, 2, 3],
-		session: sessionObj
+		session: sessionObj,
+		repeat: false,
+		name: ""
 	})
 })
 
 app.post("/chugim", function(req, res) {
-	
-	res.json(req.body)
+	var session = req.query.session;
+	if (!session) return res.send("Please send a session");
+	session = _.findWhere(_sessions.sessions, {id: session});
+	if (!session) res.send("Please send a valid session id");
+
+	if (curSesh.id != session.id) {
+		curSesh.prefs = utils.loadCamperPrefs(session.path);
+		curSesh.id = session.id;
+	}
+
+	curSesh.prefs[req.body.name] = {
+		eidah: req.body.eidah,
+		bunk: req.body.bunk,
+		prefs: [req.body.pref1, req.body.pref2, req.body.pref3]
+	}
+
+	utils.writeCamperPrefs(curSesh.prefs, session.path);
+	res.render('chug-form', {
+		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
+		bunks: session.bunks,
+		chugim: utils.getChugim(session.path),
+		counter: [1, 2, 3],
+		session: session,
+		repeat: true,
+		name: req.body.name
+	})
 })
 
 app.listen(PORT, function() {
