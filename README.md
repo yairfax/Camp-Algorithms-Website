@@ -1,3 +1,3 @@
 # Camp Algorithms Website
 Requires Node.js.  
-Execute `npm install` to use.
+Execute `make` to use.

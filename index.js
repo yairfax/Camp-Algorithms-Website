@@ -35,7 +35,6 @@ app.get("/chugim", function(req, res) {
 	if (!session) return res.render('chug-select', _sessions);
 
 	sessionObj = _.findWhere(_sessions.sessions, {id: session})
-	console.log(sessionObj)
 
 	res.render('chug-form', {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
