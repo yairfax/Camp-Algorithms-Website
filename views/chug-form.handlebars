@@ -5,6 +5,7 @@
   <p>Your response for {{name}} was recorded, please enter another camper's info.</p>
 </div>
 {{/if}}
+<label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, do it again with the <b><i>exact</i></b> same name, and the second time you fill it out will overwrite the first.</label>
 <form method="POST" action="/chugim?session={{session.id}}">
 	<div class="form-group">
 		<label for="name" required>Name</label>
