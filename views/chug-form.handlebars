@@ -1,0 +1,58 @@
+<h1 style="text-align: center">Please fill out all of your chug preference information</h1>
+<form method="POST" action="/chugim?session={{session.id}}">
+	<div class="form-group">
+		<label for="name" required>Name</label>
+		<input type="text" class="form-control" placeholder="Name" name="name" required>
+	</div>
+	<div class="form-group">
+		<label for="eidah">Eidah</label>
+		{{#each eidot}}
+		<div class="form-check">
+			<input class="form-check-input eidah" type='radio' name="eidah" id="{{toLowerCase this}}" value="{{toLowerCase this}}" required>{{this}}</input>
+		</div>
+		{{/each}}
+	</div>
+	<div class="form-group">
+		<label for='bunk'>Bunk</label>
+		<select class="custom-select" required id="bunk-select" name="bunk"></select>
+	</div>
+	{{#each counter}}
+	<div class="form-group">
+		<label for="pref{{this}}">Select Number {{this}} Preference</label>
+		<select class="custom-select" required id="pref{{this}}-select" name="pref{{this}}"></select>
+	</div>
+	{{/each}}
+	<div style="padding-bottom: 25px"><button type="submit" class="btn btn-primary">Submit</button></div>
+</form>
+
+<script>
+	//Crap to convert context into local JSON
+	var ctxt = "{{stringify this}}";
+	ctxt = ctxt.replace(/&quot;/gi, '\"')
+	ctxt = JSON.parse(ctxt)
+
+	var eidah = "";
+	$(".eidah").on('click', function() {
+		if (eidah != $(this).prop("id")) {
+			eidah = $(this).prop("id")
+
+			// Create bunk list
+			$("#bunk-select").empty();
+			$("#bunk-select").append(`<option value="" selected disabled>Select Bunk</option>`)
+			for (var bunk of ctxt.bunks[eidah]) {
+				$("#bunk-select").append(`<option value="${bunk.toLowerCase()}">${bunk}</option>`)
+			}
+
+			//Populate Chug List
+			for (var i = 1; i <= 3; i++) {
+					$(`#pref${i}-select`).empty()
+					$(`#pref${i}-select`).append(`<option value="" disabled selected>Select Preference ${i}</option`)
+			}
+			for (var chug of ctxt.chugim[eidah]) {
+				for (var i = 1; i <= 3; i++) {
+					$(`#pref${i}-select`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
+				}
+			}
+		}
+	});
+</script>
