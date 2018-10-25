@@ -35,7 +35,6 @@ app.use('/public', express.static('public'));
 function writeStuff(obj, session) {
 	atomic('chug-key', function(done, key) {
 		var prefs = utils.loadCamperPrefs(session.path);
-		var id = session.id;
 
 		prefs[obj.name] = {
 			eidah: obj.eidah,
@@ -96,13 +95,18 @@ app.get("/chugim/klugie", function(req, res) {
 
 	var session = _.findWhere(_sessions.sessions, {id: sessionID})
 
-	res.render('rosh-sports', {
+	var prefs = utils.loadCamperPrefs(session.path)
+
+	console.log(prefs)
+
+	res.render('rosh-sports-main', {
 		sessionID: sessionID,
-		prefs: utils.loadCamperPrefs(session.path),
+		prefs: prefs,
 		session: session,
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
 		counter: [1, 2, 3],
 		chugim: utils.getChugim(session.path),
+		areCampers: !(_.isEmpty(prefs))
 	})
 })
 
@@ -115,6 +119,23 @@ app.post("/chugim/klugie", function(req, res) {
 	writeStuff(req.body, session)
 
 	res.redirect(`/chugim/klugie?session=${session.id}`)
+})
+
+app.delete("/chugim/klugie", function(req, res) {
+	var session = req.query.session;
+	if (!session) return res.send("Please send a session");
+	session = _.findWhere(_sessions.sessions, {id: session});
+	if (!session) return res.send("Please send a valid session id");
+
+	atomic('chug-key', function(done, key) {
+		var prefs = utils.loadCamperPrefs(session.path);
+
+		delete prefs[req.query.camper]
+		
+		utils.writeCamperPrefs(prefs, session.path);
+		done();
+	})
+	res.send("Success")
 })
 
 app.listen(PORT, function() {
