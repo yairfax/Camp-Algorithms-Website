@@ -4,6 +4,7 @@
 	<button class="btn btn-info">Edit Session</button>
 	<button class="btn btn-danger">Delete Session</button>
 </div>
+
 <h1>{{session.name}}</h1>
 <p>Camper Preferences
 	<span style="float:right;">{{length prefs}} Campers Entered</span>
@@ -20,7 +21,7 @@
 		</tr>
 	</thead>
 	{{#each prefs}}
-	<tr>
+	<tr class="trow" data-toggle="modal" data-target="#camperModal">
 		<td>{{@key}}</td>
 		<td>{{titleCase this.eidah}}</td>
 		<td>{{titleCase this.bunk}}</td>
@@ -30,3 +31,108 @@
 	</tr>
 	{{/each}}
 </table>
+
+<!-- Modal -->
+<div class="modal fade" id="camperModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="modalTitle">Camper Data</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form method="POST" action="/chugim/klugie?session={{session.id}}">
+				<div class="modal-body">
+					<div class="form-row">
+						<div class="form-group col-md-5">
+							<label for="name">Name</label>
+							<input type="text" class="form-control" id="name" name="name" readonly>
+						</div>
+						<div class="form-group col-md-3">
+							<label for="eidah">Eidah</label>
+							<select class="custom-select" required id="eidah" name="eidah">
+								{{#each eidot}}
+								<option value="{{toLowerCase this}}">{{this}}</option>
+								{{/each}}
+							</select>
+						</div>
+						<div class="form-group col-md-4">
+							<label for="bunk">Bunk</label>
+							<select class="custom-select" required id="bunk" name="bunk"></select>
+						</div>
+					</div>
+					{{#each counter}}
+					<div class="form-group">
+						<label for="pref{{this}}">Choice {{this}}</label>
+						<select class="custom-select" required id="pref{{this}}" name="pref{{this}}"></select>
+					</div>
+					{{/each}}
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+					<button type="submit" class="btn btn-primary">Save changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+
+<script>
+	var curEidah = ""
+
+	//Crap to convert context into local JSON
+	var ctxt = "{{stringify this}}";
+	ctxt = ctxt.replace(/&quot;/gi, '\"')
+	ctxt = JSON.parse(ctxt)
+
+	//Make sure to pass in lower case eidah
+	function bunksAndChugim(eidah) {
+		$("#bunk").empty();
+		$("#bunk").append(`<option value="" selected disabled>Select Bunk</option>`)
+		for (var bunk of ctxt.session.bunks[eidah]) {
+			$("#bunk").append(`<option value=${bunk.toLowerCase()}>${bunk}</option>`)
+		}
+
+		//Populate Chug List
+		for (var i = 1; i <= 3; i++) {
+				$(`#pref${i}`).empty()
+				$(`#pref${i}`).append(`<option value="" disabled selected>Select Preference ${i}</option`)
+		}
+		for (var chug of ctxt.chugim[eidah]) {
+			for (var i = 1; i <= 3; i++) {
+				$(`#pref${i}`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
+			}
+		}
+	}
+
+	// Set coloring for tables
+	$(".trow").on({
+		'mouseenter': function() {
+			$(this).css("background-color", "#b3caef")},
+		'mouseleave': function() {
+			$(this).css("background-color", "white")},
+	});
+
+
+	// Use modal presentation event
+	$("#camperModal").on("show.bs.modal", function(event) {
+		var row = $(event.relatedTarget)
+		data = row.find('td')
+		modal = $(this)
+		curEidah = data[1].textContent.toLowerCase()
+		
+		modal.find('#name').val(data[0].textContent)
+		modal.find('#eidah').val(data[1].textContent.toLowerCase())
+		bunksAndChugim(curEidah)
+		modal.find('#bunk').val(data[2].textContent.toLowerCase())
+		for (var i = 1; i <= 3; i++) {
+			modal.find(`#pref${i}`).val(data[i+2].textContent.toLowerCase())
+		}
+	});
+
+	$("#eidah").on("change", function() {
+		bunksAndChugim($(this)[0].value)
+	});
+</script>

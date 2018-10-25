@@ -27,14 +27,27 @@ app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
 
-
 //Server
 
 //Chugim
-var curSesh = {
-	prefs: {},
-	id: ""
+
+//Helper Functions
+function writeStuff(obj, session) {
+	atomic('chug-key', function(done, key) {
+		var prefs = utils.loadCamperPrefs(session.path);
+		var id = session.id;
+
+		prefs[obj.name] = {
+			eidah: obj.eidah,
+			bunk: obj.bunk,
+			prefs: [obj.pref1, obj.pref2, obj.pref3]
+		}
+		utils.writeCamperPrefs(prefs, session.path);
+		done();
+	})
 }
+
+// Requests
 
 app.get("/", function(req, res) {
 	res.render('home');
@@ -61,20 +74,9 @@ app.post("/chugim", function(req, res) {
 	var session = req.query.session;
 	if (!session) return res.send("Please send a session");
 	session = _.findWhere(_sessions.sessions, {id: session});
-	if (!session) res.send("Please send a valid session id");
+	if (!session) return res.send("Please send a valid session id");
 
-	atomic('chug-key', function(done, key) {
-		curSesh.prefs = utils.loadCamperPrefs(session.path);
-		curSesh.id = session.id;
-
-		curSesh.prefs[req.body.name] = {
-			eidah: req.body.eidah,
-			bunk: req.body.bunk,
-			prefs: [req.body.pref1, req.body.pref2, req.body.pref3]
-		}
-		utils.writeCamperPrefs(curSesh.prefs, session.path);
-		done();
-	})
+	writeStuff(req.body, session)
 
 	res.render('chug-form', {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
@@ -97,8 +99,22 @@ app.get("/chugim/klugie", function(req, res) {
 	res.render('rosh-sports', {
 		sessionID: sessionID,
 		prefs: utils.loadCamperPrefs(session.path),
-		session: session
+		session: session,
+		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
+		counter: [1, 2, 3],
+		chugim: utils.getChugim(session.path),
 	})
+})
+
+app.post("/chugim/klugie", function(req, res) {
+	var session = req.query.session;
+	if (!session) return res.send("Please send a session");
+	session = _.findWhere(_sessions.sessions, {id: session});
+	if (!session) return res.send("Please send a valid session id");
+
+	writeStuff(req.body, session)
+
+	res.redirect(`/chugim/klugie?session=${session.id}`)
 })
 
 app.listen(PORT, function() {
