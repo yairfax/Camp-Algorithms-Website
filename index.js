@@ -6,16 +6,17 @@ var exphbs = require('express-handlebars');
 var handlebars = exphbs.handlebars;
 var app = express();
 var PORT = 3000;
-var _sessions = require('./sessions/sessions.json')
-var utils = require('./utils.js')
-var atomic = require('atomic')()
-
+var _sessions = require('./sessions/sessions.json');
+var utils = require('./utils.js');
+var atomic = require('atomic')();
 
 //Handlebars stuff
 var hbs = exphbs.create({
 	helpers: {
 		toLowerCase: function(str) {return str.toLowerCase()},
-		stringify: JSON.stringify},
+		stringify: JSON.stringify,
+		length: _.size,
+		titleCase: utils.titleCase},
 	defaultLayout: 'main',
 	partialsDir: "views/partials/"
 })
@@ -43,7 +44,7 @@ app.get("/chugim", function(req, res) {
 	var session = req.query.session;
 	if (!session) return res.render('chug-select', _sessions);
 
-	sessionObj = _.findWhere(_sessions.sessions, {id: session})
+	var sessionObj = _.findWhere(_sessions.sessions, {id: session})
 
 	res.render('chug-form', {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
@@ -83,6 +84,20 @@ app.post("/chugim", function(req, res) {
 		session: session,
 		repeat: true,
 		name: req.body.name
+	})
+})
+
+//Rosh Sports Side
+app.get("/chugim/klugie", function(req, res) {
+	var sessionID = req.query.session;
+	if (!sessionID) return res.render('rosh-sports-select', _sessions);
+
+	var session = _.findWhere(_sessions.sessions, {id: sessionID})
+
+	res.render('rosh-sports', {
+		sessionID: sessionID,
+		prefs: utils.loadCamperPrefs(session.path),
+		session: session
 	})
 })
 

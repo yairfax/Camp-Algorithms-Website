@@ -1,0 +1,32 @@
+<div class="top-right">
+	<button class="btn btn-primary">Produce Chug List</button>
+	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Back to Entering</a>
+	<button class="btn btn-info">Edit Session</button>
+	<button class="btn btn-danger">Delete Session</button>
+</div>
+<h1>{{session.name}}</h1>
+<p>Camper Preferences
+	<span style="float:right;">{{length prefs}} Campers Entered</span>
+</p>
+<table class="table">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Eidah</th>
+			<th>Bunk</th>
+			<th>Choice 1</th>
+			<th>Choice 2</th>
+			<th>Choice 3</th>
+		</tr>
+	</thead>
+	{{#each prefs}}
+	<tr>
+		<td>{{@key}}</td>
+		<td>{{titleCase this.eidah}}</td>
+		<td>{{titleCase this.bunk}}</td>
+		{{#each this.prefs}}
+		<td>{{titleCase this}}</td>
+		{{/each}}
+	</tr>
+	{{/each}}
+</table>
