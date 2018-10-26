@@ -55,8 +55,8 @@ app.get("/", function(req, res) {
 app.get("/chugim", function(req, res) {
 	var session = req.query.session;
 	if (!session) return res.render('chug-select', _sessions);
-
 	var sessionObj = _.findWhere(_sessions.sessions, {id: session})
+	if (!sessionObj) return res.render('chug-select', _sessions);
 
 	res.render('chug-form', {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
@@ -92,12 +92,10 @@ app.post("/chugim", function(req, res) {
 app.get("/chugim/klugie", function(req, res) {
 	var sessionID = req.query.session;
 	if (!sessionID) return res.render('rosh-sports-select', _sessions);
-
 	var session = _.findWhere(_sessions.sessions, {id: sessionID})
+	if (!session) return res.render('rosh-sports-select', _sessions);
 
 	var prefs = utils.loadCamperPrefs(session.path)
-
-	console.log(prefs)
 
 	res.render('rosh-sports-main', {
 		sessionID: sessionID,
@@ -135,6 +133,26 @@ app.delete("/chugim/klugie", function(req, res) {
 		utils.writeCamperPrefs(prefs, session.path);
 		done();
 	})
+	res.send("Success")
+})
+
+//Session creation and deletion
+app.delete("/chugim/klugie/newsession", function(req, res) {
+	var session = req.query.session;
+	if (!session) return res.send("Please send a session");
+	session = _.findWhere(_sessions.sessions, {id: session});
+	if (!session) return res.send("Please send a valid session id");
+
+	atomic('chug-key', function(done, key) {
+		_sessions.sessions = _.reject(_sessions.sessions, function(ent) {
+			return ent.id == session.id
+		})
+
+		utils.writeSession(_sessions, session.path)
+
+		done()
+	})
+
 	res.send("Success")
 })
 

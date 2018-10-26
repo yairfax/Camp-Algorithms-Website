@@ -2,6 +2,7 @@ var parse = require('csv-parse/lib/sync');
 var fs = require('fs')
 var _ = require('underscore');
 var capitalize = require('capitalize')
+var { execFile } = require('child_process');
 
 function getChugim(path) {
 	var obj = parse(fs.readFileSync(path + "klugim-info.csv"), {columns: true})
@@ -35,6 +36,11 @@ function writeCamperPrefs(obj, path) {
 	fs.writeFileSync(path + "camper-prefs.json", JSON.stringify(obj))
 }
 
+function writeSession(obj, path) {
+	fs.writeFileSync("sessions/sessions.json", JSON.stringify(obj))
+	execFile('rm', ['-r', path])
+}
+
 function titleCase(str) {
 	return str.split(' ').map(function(word) {
 		if (word == "bbq") return word.toUpperCase();
@@ -47,6 +53,7 @@ module.exports = {
 	getChugim: getChugim,
 	writeCamperPrefs: writeCamperPrefs,
 	loadCamperPrefs: loadCamperPrefs,
-	titleCase: titleCase
+	titleCase: titleCase,
+	writeSession: writeSession
 }
 
