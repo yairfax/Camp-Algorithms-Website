@@ -1,7 +1,8 @@
 var parse = require('csv-parse/lib/sync');
 var fs = require('fs')
 var _ = require('underscore');
-var capitalize = require('capitalize')
+var capitalize = require('capitalize');
+var { execFile } = require('child_process');
 
 function getChugim(path) {
 	var obj = parse(fs.readFileSync(path + "klugim-info.csv"), {columns: true})
