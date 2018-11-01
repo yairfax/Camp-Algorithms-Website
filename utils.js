@@ -57,7 +57,6 @@ module.exports = {
 	writeCamperPrefs: writeCamperPrefs,
 	loadCamperPrefs: loadCamperPrefs,
 	titleCase: titleCase,
-	writeSession: writeSession,
-	init: init
+	writeSession: writeSession
 }
 
