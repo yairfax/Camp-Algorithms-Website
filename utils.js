@@ -68,5 +68,3 @@ module.exports = {
 	init: init
 }
 
-console.log(getChugim("sessions/18ii/"))
-
