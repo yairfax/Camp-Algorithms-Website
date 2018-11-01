@@ -2,7 +2,6 @@ var parse = require('csv-parse/lib/sync');
 var fs = require('fs')
 var _ = require('underscore');
 var capitalize = require('capitalize')
-var { execFile } = require('child_process');
 
 function getChugim(path) {
 	var obj = parse(fs.readFileSync(path + "klugim-info.csv"), {columns: true})
@@ -13,6 +12,7 @@ function getChugim(path) {
 		gimmel: [],
 		daled: []
 	}
+	console.log(obj);
 
 	// For each chug, calculate eidot with that chug and put into that array in the object
 	_.each(chugim, function(arr, eidah) {
@@ -36,9 +36,12 @@ function writeCamperPrefs(obj, path) {
 	fs.writeFileSync(path + "camper-prefs.json", JSON.stringify(obj))
 }
 
-function writeSession(obj, path) {
-	fs.writeFileSync("sessions/sessions.json", JSON.stringify(obj))
-	execFile('rm', ['-r', path])
+function writeSession(obj) {
+	fs.writeFileSync("sessions/sessions.json", JSON.stringify(obj));
+}
+
+function readSessions(obj) {
+	return fs.readFileSync("sessions/sessions.json");
 }
 
 function titleCase(str) {
@@ -49,6 +52,13 @@ function titleCase(str) {
 	}).join(' ');
 }
 
+function init() {
+	if (!fs.existsSync("sessions")) {
+		execFile("mkdir", ['sessions']);
+		writeSession("{}");
+	}
+}
+
 module.exports = {
 	getChugim: getChugim,
 	writeCamperPrefs: writeCamperPrefs,
@@ -56,4 +66,6 @@ module.exports = {
 	titleCase: titleCase,
 	writeSession: writeSession
 }
+
+console.log(getChugim("sessions/18ii/"))
 

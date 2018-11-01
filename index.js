@@ -9,6 +9,7 @@ var PORT = 3000;
 var _sessions = require('./sessions/sessions.json');
 var utils = require('./utils.js');
 var atomic = require('atomic')();
+var { execFile } = require('child_process');
 
 //Handlebars stuff
 var hbs = exphbs.create({
@@ -148,14 +149,57 @@ app.delete("/chugim/klugie/newsession", function(req, res) {
 			return ent.id == session.id
 		})
 
-		utils.writeSession(_sessions, session.path)
+		execFile('rm', ['-r', session.path]);
+		utils.writeSession(_sessions);
 
-		done()
+		done();
 	})
 
 	res.send("Success")
 })
 
+app.get("/chugim/klugie/newsession", function(req, res) {
+	res.render('rosh-sports-new', {
+		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]
+	});
+})
+
+app.post("/chugim/klugie/newsession", function(req, res) {
+	var id = (req.body.year - 2000) + req.body.session;
+
+	// TODO: implement where existing session is passed in.
+
+	if (_.findWhere(_sessions, {id: id})) {
+		// TODO: implement where id exists already, redirect to that page
+	}
+
+	atomic('chug-key', function(done, key) {
+		var newSesh = {
+			id: id,
+			path: "sessions/" + id + "/",
+			name: req.body.year + " " + req.body.session.toUpperCase(),
+			bunks: {
+				aleph: req.body.Aleph,
+				vav: req.body.Vav,
+				bet: req.body.Bet,
+				gimmel: req.body.Gimmel,
+				daled: req.body.Daled
+			}
+		};
+		_sessions.sessions.push(newSesh);
+
+		utils.writeSession(_sessions);
+		execFile('mkdir', [newSesh.path]);
+		
+		// TODO: implement chug writing
+
+		done();
+	})
+
+	res.redirect("/chugim/klugie?session=" + id);
+})
+
 app.listen(PORT, function() {
-	console.log("Server listening on port:", PORT);
+	execFile("open", ['http://localhost:3000']);
+	console.log("Camp algorithms server listening on:", PORT);
 })

@@ -15,7 +15,7 @@
 		<label for="eidah">Eidah</label>
 		{{#each eidot}}
 		<div class="form-check">
-			<input class="form-check-input eidah" type='radio' name="eidah" id="{{toLowerCase this}}" value="{{toLowerCase this}}" required>{{this}}</input>
+			<input class="form-check-input eidah" type='radio' name="eidah" value="{{toLowerCase this}}" required>{{this}}</input>
 		</div>
 		{{/each}}
 	</div>
@@ -40,8 +40,8 @@
 
 	var eidah = "";
 	$(".eidah").on('click', function() {
-		if (eidah != $(this).prop("id")) {
-			eidah = $(this).prop("id")
+		if (eidah != $(this).val()) {
+			eidah = $(this).val()
 
 			// Create bunk list
 			$("#bunk-select").empty();
