@@ -6,8 +6,9 @@ var exphbs = require('express-handlebars');
 var handlebars = exphbs.handlebars;
 var app = express();
 var PORT = 3000;
-var _sessions = require('./sessions/sessions.json');
 var utils = require('./utils.js');
+utils.init();
+var _sessions = require('./sessions/sessions.json');
 var atomic = require('atomic')();
 var { execFile } = require('child_process');
 

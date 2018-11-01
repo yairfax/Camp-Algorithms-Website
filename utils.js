@@ -64,7 +64,8 @@ module.exports = {
 	writeCamperPrefs: writeCamperPrefs,
 	loadCamperPrefs: loadCamperPrefs,
 	titleCase: titleCase,
-	writeSession: writeSession
+	writeSession: writeSession,
+	init: init
 }
 
 console.log(getChugim("sessions/18ii/"))
