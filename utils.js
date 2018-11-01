@@ -2,7 +2,6 @@ var parse = require('csv-parse/lib/sync');
 var fs = require('fs')
 var _ = require('underscore');
 var capitalize = require('capitalize');
-var { execFile } = require('child_process');
 
 function getChugim(path) {
 	var obj = parse(fs.readFileSync(path + "klugim-info.csv"), {columns: true})
@@ -51,13 +50,6 @@ function titleCase(str) {
 		else if (word == "and" || word == "or" || word == "for" || word == "of" || word == "on") return word;
 		else return capitalize(word);
 	}).join(' ');
-}
-
-function init() {
-	if (!fs.existsSync("sessions")) {
-		execFile("mkdir", ['sessions']);
-		writeSession("{}");
-	}
 }
 
 module.exports = {
