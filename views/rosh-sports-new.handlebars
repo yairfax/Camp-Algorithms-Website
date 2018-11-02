@@ -37,7 +37,7 @@
 		{{/each}}
 	</div>
 	<h2>Chugim</h2>
-	<p>Please enter the chug name, its popularity as a number between 0 and 1, and its capacity</p>
+	<p>Please enter the chug name, its popularity as a number between 0 and 1, its capacity, and which eidot its open to.</p>
 	<div id="chug-container"></div>
 	<div id="button-container" style="padding-bottom: 25px">
 		<button type="button" class="btn btn-primary" id="add-chug">Add Chug</button>
@@ -46,9 +46,11 @@
 </form>
 
 <script>
-	var chugAdd =
+	var chugNum = 0;
+	function getNewChug(num) {
+		var chugAdd =
 		`<div class="form-row">
-			<div class="form-group col-md-4">
+			<div class="form-group col-md-3">
 				<input class="form-control" type="text" placeholder="Chug Name" name="name" required></input>
 			</div>
 			<div class="form-group col-md-2">
@@ -57,11 +59,25 @@
 			<div class="form-group col-md-2">
 				<input class="form-control" type="number" min="0" max="100" name="capacity" placeholder="Capacity" required></input>
 			</div>
-			<button type="button" id="delete" class="btn btn-danger delete-chug" style="height: 37px">-</button>
-		</div>`;
+			<div class="form-group col-md4">`
+		var chugChecks = "";
+		for (var eidah of ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]) {
+			chugChecks += `<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" name="eidot[${num}]" value="${eidah.toLowerCase()}">
+							<label class="form-check-label" for="${eidah.toLowerCase()}">${eidah}</label>
+						</div>`
+		}
+		chugAdd += chugChecks;
+		chugAdd += `</div>
+						<button type="button" id="delete" class="btn btn-danger delete-chug" style="height: 37px">-</button>
+					</div>`;
+
+		return chugAdd;
+	}
+	
 	
 	$("#add-chug").on('click', function() {
-		$("#chug-container").append(chugAdd);
+		$("#chug-container").append(getNewChug(chugNum++));
 		$(".delete-chug").on("click", function(event) {
 			$(this).parent().remove();
 		});

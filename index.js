@@ -9,7 +9,7 @@ var PORT = 3000;
 var utils = require('./utils.js');
 var _sessions = require('./sessions/sessions.json');
 var atomic = require('atomic')();
-var { execFile } = require('child_process');
+var execFile = require('child_process');
 
 //Handlebars stuff
 var hbs = exphbs.create({
@@ -149,7 +149,7 @@ app.delete("/chugim/klugie/newsession", function(req, res) {
 			return ent.id == session.id
 		})
 
-		execFile('rm', ['-r', session.path]);
+		execFile.execFile('rm', ['-r', session.path]);
 		utils.writeSession(_sessions);
 
 		done();
@@ -189,9 +189,33 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 		_sessions.sessions.push(newSesh);
 
 		utils.writeSession(_sessions);
-		execFile('mkdir', [newSesh.path]);
 		
-		// TODO: implement chug writing
+		//Ensure wait for call to finish. Clunky, probably an easier way to do it
+		var temp = function() {
+			execFile.execFileSync('mkdir', [newSesh.path]);
+		}
+		temp();
+
+		//Some cleaning
+		eidot = _.filter(req.body, function(val, key) {
+			return key.includes("eidot");
+		})
+		name = _.flatten([req.body.name])
+		capacity = _.flatten([req.body.capacity])
+		popularity = _.flatten([req.body.popularity])
+
+
+		var klugim_info = []
+		for (i in name) {
+			klugim_info.push({
+				name: name[i],
+				capacity: parseInt(capacity[i]),
+				popularity: parseFloat(popularity[i]),
+				eidot: eidot[i]
+			})
+		}
+
+		utils.writeChugData(klugim_info, newSesh.path);
 
 		done();
 	})
@@ -200,6 +224,6 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 })
 
 app.listen(PORT, function() {
-	execFile("open", ['http://localhost:3000']);
+	execFile.execFile("open", ['http://localhost:3000']);
 	console.log("Camp algorithms server listening on:", PORT);
 })

@@ -15,7 +15,8 @@
 		<label for="eidah">Eidah</label>
 		{{#each eidot}}
 		<div class="form-check">
-			<input class="form-check-input eidah" type='radio' name="eidah" value="{{toLowerCase this}}" required>{{this}}</input>
+			<input class="form-check-input eidah" type='radio' name="eidah" value="{{toLowerCase this}}" required>
+			<label class="form-check-label" for="{{toLowerCase this}}">{{this}}<label>
 		</div>
 		{{/each}}
 	</div>
