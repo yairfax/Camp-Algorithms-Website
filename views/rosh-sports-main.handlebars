@@ -1,8 +1,9 @@
+<title>Rosh Sports Portal: {{session.name}}</title>
 <div class="top-right">
 	<button class="btn btn-primary">Produce Chug List</button>
 	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Back to Entering</a>
 	<a href="/chugim/klugie" class="btn btn-primary" role="button">Select Another Session</a>
-	<button class="btn btn-info">Edit Session</button>
+	<button data-toggle="modal" data-target="#editWarning" class="btn btn-info">Edit Session</button>
 	<button data-toggle="modal" data-target="#deleteWarning" class="btn btn-danger">Delete Session</button>
 </div>
 
@@ -98,6 +99,25 @@
 				<p style="text-align: justify">Are you sure you want to delete this session? All of the camper data will be permentantly deleted. This action is not undoable.</p>
 				<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
 				<button type="button" class="btn btn-danger" id="delete-session">Yes, Delete Session</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Edit Warning -->
+<div class="modal fade" id="editWarning" style="text-align: center">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="modalTitle">Are you sure?</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p style="text-align: justify">Are you sure you want to edit the session? If you edit existing chug names and campers have already entered their preferences, the program later <b><i>will</i></b> fail.</p>
+				<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+				<a href="/chugim/klugie/newsession?session={{session.id}}" class="btn btn-warning" role="button">Yes, Edit Session</a>
 			</div>
 		</div>
 	</div>

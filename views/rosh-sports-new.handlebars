@@ -1,6 +1,7 @@
+<title>Rosh Sports Portal: Edit Session</title>
 <h1>Enter Session Information</h1>
 <p><b>NOTE:</b> If you enter a session that was already entered, this will <b>overwrite</b> that data.</p>
-<form action="/chugim/klugie/newsession" method="POST">
+<form id="new-sesh-form" method="POST" action="/chugim/klugie/newsession">
 	<div class="form-row">
 		<div class="form-group col-md-3">
 			<label for="year">Year</label>
@@ -9,10 +10,10 @@
 		<div class="form-group col-md-3">
 			<label for="session">Session</label>
 			<div class="form-check">
-				<input class="form-check-input" type='radio' name="session" value="i" required>First</input>
+				<input class="form-check-input session" type='radio' name="session" value="i" required>First</input>
 			</div>
 			<div class="form-check">
-				<input class="form-check-input" type='radio' name="session" value="ii" required>Second</input>
+				<input class="form-check-input session" type='radio' name="session" value="ii" required>Second</input>
 			</div>
 		</div>
 	</div>
@@ -39,6 +40,9 @@
 	<h2>Chugim</h2>
 	<p>Please enter the chug name, its popularity as a number between 0 and 1, its capacity, and which eidot its open to.</p>
 	<div id="chug-container"></div>
+	<div id="form-group form-check" style="visibility: hidden">
+		<input class="form-check-input" type="radio" name="editing" id="edit"></input>
+	</div>
 	<div id="button-container" style="padding-bottom: 25px">
 		<button type="button" class="btn btn-primary" id="add-chug">Add Chug</button>
 		<button type="submit" class="btn btn-primary">Submit</button>
@@ -46,40 +50,102 @@
 </form>
 
 <script>
+	//Crap to convert context into local JSON
+	var ctxt = "{{stringify this}}";
+	ctxt = ctxt.replace(/&quot;/gi, '\"')
+	ctxt = JSON.parse(ctxt)
+
 	var chugNum = 0;
-	function getNewChug(num) {
-		var chugAdd =
-		`<div class="form-row">
+	function getNewChug() {
+		var chugAdd = $("<div>")
+		var temp = `<div class="form-row">
 			<div class="form-group col-md-3">
-				<input class="form-control" type="text" placeholder="Chug Name" name="name" required></input>
+				<input class="form-control" id="name" type="text" placeholder="Chug Name" name="name" required></input>
 			</div>
 			<div class="form-group col-md-2">
-				<input class="form-control" type="number" step=".1" min="0" max="1" name="popularity" placeholder="Popularity" required></input>
+				<input class="form-control" id="pop" type="number" step=".1" min="0" max="1" name="popularity" placeholder="Popularity" required></input>
 			</div>
 			<div class="form-group col-md-2">
-				<input class="form-control" type="number" min="0" max="100" name="capacity" placeholder="Capacity" required></input>
+				<input class="form-control" id="cap" type="number" min="0" max="100" name="capacity" placeholder="Capacity" required></input>
 			</div>
-			<div class="form-group col-md4">`
-		var chugChecks = "";
-		for (var eidah of ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]) {
-			chugChecks += `<div class="form-check form-check-inline">
-							<input class="form-check-input" type="checkbox" name="eidot[${num}]" value="${eidah.toLowerCase()}">
+			<button type="button" id="delete" class="btn btn-danger delete-chug" style="height: 37px">-</button>
+		</div>
+		<div class="form-row">
+			<div class="form-group">`
+		for (var eidah of ["Aleph", "Vav", "Bet", "Gimmel", "Daled", "AV", "BGD", "All"]) {
+			temp += `<div class="form-check form-check-inline">
+							<input class="form-check-input" type="checkbox" id="eidot" name="eidot[${chugNum}]" value="${eidah.toLowerCase()}">
 							<label class="form-check-label" for="${eidah.toLowerCase()}">${eidah}</label>
 						</div>`
 		}
-		chugAdd += chugChecks;
-		chugAdd += `</div>
-						<button type="button" id="delete" class="btn btn-danger delete-chug" style="height: 37px">-</button>
-					</div>`;
+		temp += `</div></div><hr>`;
+		chugNum++;
 
+		chugAdd.append(temp)
 		return chugAdd;
 	}
 	
-	
-	$("#add-chug").on('click', function() {
-		$("#chug-container").append(getNewChug(chugNum++));
+	function addChug(newChug) {
+		$("#chug-container").append(newChug);
 		$(".delete-chug").on("click", function(event) {
-			$(this).parent().remove();
+			// Double parent for both rows. outer div tag makes sure it only removes this elt
+			$(this).parent().parent().remove();
 		});
+	}
+
+	$("#add-chug").on('click', function() {
+		addChug(getNewChug());
+	});
+
+	if (ctxt.editing) {
+		// Load in session data
+		$("#year").val(ctxt.session.year);
+		$(`input[value=${ctxt.session.session}]`).prop('checked', true)
+		for (var i of ctxt.eidot) {
+			var arr = $(`.${i}`);
+			for (var j in arr) {
+				arr[j].value = ctxt.session.bunks[i.toLowerCase()][j]
+			}
+		}
+
+		// Populate Chug list
+		for (var chug of ctxt.chugim) {
+			var temp = getNewChug();
+			temp.find("#name").val(chug.name);
+			temp.find("#cap").val(chug.capacity);
+			temp.find("#pop").val(chug.popularity);
+
+			for (var eidah of chug.eidot) {
+				temp.find(`input[value=${eidah}]`).prop('checked', true);
+			}
+			addChug(temp);
+		}
+
+		$("#edit").prop('checked', true);
+	}
+
+	$("#new-sesh-form").on("submit", function(event) {
+		if (!ctxt.editing) {
+			var id = ($("#year").val() - 2000) + $(".session:checked").val()
+			if (ctxt.sessionIDs.includes(id)) {
+				$("#year").removeClass('is-invalid');
+				$("#year").next('.invalid-feedback').remove();
+
+				$("#year").addClass('is-invalid')
+				$("#year").parent().append(`<div class="invalid-feedback">Session already exists</div>`)
+
+				$("#year,.session").on('click', function() {
+					$("#year").removeClass('is-invalid');
+					$("#year").next('.invalid-feedback').remove();
+				})
+				return false;
+			}
+		}
+
+		if($("#chug-container").is(":empty")) {
+			alert("Please add chugim")
+			return false;
+		}
+		
 	});
 </script>

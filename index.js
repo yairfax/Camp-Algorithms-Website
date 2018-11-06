@@ -159,25 +159,54 @@ app.delete("/chugim/klugie/newsession", function(req, res) {
 })
 
 app.get("/chugim/klugie/newsession", function(req, res) {
-	res.render('rosh-sports-new', {
-		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]
+	var eidot = ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]
+	var sessionIDs = _.pluck(_sessions.sessions, 'id')
+
+	var id = req.query.session;
+	// If no ID passed in.
+	if (!id) return res.render('rosh-sports-new', {
+		eidot: eidot,
+		sessionIDs: sessionIDs
 	});
+	// If session doesn't exist
+	var session = _.findWhere(_sessions.sessions, {id: id});
+	if (!session) return res.render('rosh-sports-new', {
+		eidot: eidot,
+		sessionIDs: sessionIDs
+	});
+
+	res.render('rosh-sports-new', {
+		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
+		session: session,
+		chugim: utils.getFullChugim(session.path),
+		editing: true
+	})
 })
 
 app.post("/chugim/klugie/newsession", function(req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
 
-	// TODO: implement where existing session is passed in.
+	var editing = (req.body.editing === 'on')
 
-	if (_.findWhere(_sessions, {id: id})) {
-		// TODO: implement where id exists already, redirect to that page
+	if (_.findWhere(_sessions.sessions, {id: id}) && !(editing)) {
+		return res.send("Session exists already, please go back");
 	}
 
 	atomic('chug-key', function(done, key) {
+
+		if (editing) {
+			_sessions.sessions = _.reject(_sessions.sessions, function(sesh) {
+				return sesh.id === id;
+			})
+		}
+
+		// Session file writing
 		var newSesh = {
 			id: id,
 			path: "sessions/" + id + "/",
 			name: req.body.year + " " + req.body.session.toUpperCase(),
+			year: parseInt(req.body.year),
+			session: req.body.session,
 			bunks: {
 				aleph: req.body.Aleph,
 				vav: req.body.Vav,
@@ -186,24 +215,50 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 				daled: req.body.Daled
 			}
 		};
+
 		_sessions.sessions.push(newSesh);
 
-		utils.writeSession(_sessions);
-		
-		//Ensure wait for call to finish. Clunky, probably an easier way to do it
-		var temp = function() {
+		if (!editing) {
+			//Session directory creation
 			execFile.execFileSync('mkdir', [newSesh.path]);
 		}
-		temp();
 
+		utils.writeSession(_sessions);
+
+
+		//klugim-info.json creation
 		//Some cleaning
 		eidot = _.filter(req.body, function(val, key) {
 			return key.includes("eidot");
+		});
+		eidot = _.map(eidot, function(val, ind) {
+			if (typeof val == 'string') {
+				return [val]
+			}
+			else return val;
 		})
+		eidot = _.map(eidot, function(arr, ind) {
+			return _.uniq(_.reduce(arr, function(memo, eidah) {
+				if (eidah === "all") {
+					return memo.concat(['aleph', 'vav', 'bet', 'gimmel', 'daled']);
+				} else if (eidah === "av") {
+					return memo.concat(['aleph', 'vav']);
+				} else if (eidah === "bgd") {
+					return memo.concat(['bet', 'gimmel', 'daled'])
+				} else {
+					memo.push(eidah);
+					return memo
+				}
+		}, []))});
+
 		name = _.flatten([req.body.name])
 		capacity = _.flatten([req.body.capacity])
 		popularity = _.flatten([req.body.popularity])
 
+		console.log(eidot)
+		console.log(name)
+		console.log(capacity)
+		console.log(popularity)
 
 		var klugim_info = []
 		for (i in name) {

@@ -22,6 +22,10 @@ function getChugim(path) {
 	return chugim
 }
 
+function getFullChugim(path) {
+	return require("./" + path + "klugim-info.json")
+}
+
 function writeChugData(obj, path) {
 	fs.writeFileSync(path + "klugim-info.json", "[]")
 	fs.writeFileSync(path + "klugim-info.json", JSON.stringify(obj));
@@ -62,6 +66,7 @@ module.exports = {
 	titleCase: titleCase,
 	writeSession: writeSession,
 	readSessions, readSessions,
-	writeChugData: writeChugData
+	writeChugData: writeChugData,
+	getFullChugim: getFullChugim
 }
 
