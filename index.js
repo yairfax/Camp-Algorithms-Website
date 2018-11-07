@@ -33,7 +33,7 @@ app.use('/public', express.static('public'));
 //Chugim
 
 //Helper Functions
-function writeStuff(obj, session) {
+function writeCamper(obj, session) {
 	atomic('chug-key', function(done, key) {
 		var prefs = utils.loadCamperPrefs(session.path);
 
@@ -76,7 +76,7 @@ app.post("/chugim", function(req, res) {
 	session = _.findWhere(_sessions.sessions, {id: session});
 	if (!session) return res.send("Please send a valid session id");
 
-	writeStuff(req.body, session)
+	writeCamper(req.body, session)
 
 	res.render('chug-form', {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
@@ -115,7 +115,7 @@ app.post("/chugim/klugie", function(req, res) {
 	session = _.findWhere(_sessions.sessions, {id: session});
 	if (!session) return res.send("Please send a valid session id");
 
-	writeStuff(req.body, session)
+	writeCamper(req.body, session)
 
 	res.redirect(`/chugim/klugie?session=${session.id}`)
 })
@@ -186,7 +186,7 @@ app.get("/chugim/klugie/newsession", function(req, res) {
 app.post("/chugim/klugie/newsession", function(req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
 
-	var editing = (req.body.editing === 'on')
+	var editing = req.body.editing
 
 	if (_.findWhere(_sessions.sessions, {id: id}) && !(editing)) {
 		return res.send("Session exists already, please go back");
@@ -196,7 +196,7 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 
 		if (editing) {
 			_sessions.sessions = _.reject(_sessions.sessions, function(sesh) {
-				return sesh.id === id;
+				return sesh.id === editing;
 			})
 		}
 
@@ -221,6 +221,8 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 		if (!editing) {
 			//Session directory creation
 			execFile.execFileSync('mkdir', [newSesh.path]);
+		} else if (editing != id) {
+			execFile.execFileSync('mv', [`sessions/${editing}`, `sessions/${id}`])
 		}
 
 		utils.writeSession(_sessions);
@@ -255,10 +257,6 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 		capacity = _.flatten([req.body.capacity])
 		popularity = _.flatten([req.body.popularity])
 
-		console.log(eidot)
-		console.log(name)
-		console.log(capacity)
-		console.log(popularity)
 
 		var klugim_info = []
 		for (i in name) {

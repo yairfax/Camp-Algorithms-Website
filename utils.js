@@ -3,7 +3,7 @@ var _ = require('underscore');
 var capitalize = require('capitalize');
 
 function getChugim(path) {
-	var obj = require("./" + path + "klugim-info.json")
+	var obj = JSON.parse(fs.readFileSync(path + "klugim-info.json"))
 	var chugim = {
 		aleph: [],
 		vav: [],
@@ -23,7 +23,7 @@ function getChugim(path) {
 }
 
 function getFullChugim(path) {
-	return require("./" + path + "klugim-info.json")
+	return JSON.parse(fs.readFileSync(path + "klugim-info.json"))
 }
 
 function writeChugData(obj, path) {

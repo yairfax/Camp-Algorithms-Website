@@ -1,11 +1,11 @@
 <title>Rosh Sports Portal: Edit Session</title>
 <h1>Enter Session Information</h1>
-<p><b>NOTE:</b> If you enter a session that was already entered, this will <b>overwrite</b> that data.</p>
+<p><b>NOTE:</b> To edit an existing session, navigate to Edit Session from that session's page.</p>
 <form id="new-sesh-form" method="POST" action="/chugim/klugie/newsession">
 	<div class="form-row">
 		<div class="form-group col-md-3">
 			<label for="year">Year</label>
-			<input class="form-control" type="number" id="year" name="year" min="2000" max="3000" value="2000" required></input>
+			<input class="form-control" type="number" id="year" name="year" min="2000" max="3000" required></input>
 		</div>
 		<div class="form-group col-md-3">
 			<label for="session">Session</label>
@@ -41,7 +41,7 @@
 	<p>Please enter the chug name, its popularity as a number between 0 and 1, its capacity, and which eidot its open to.</p>
 	<div id="chug-container"></div>
 	<div id="form-group form-check" style="visibility: hidden">
-		<input class="form-check-input" type="radio" name="editing" id="edit"></input>
+		<input class="form-check-input" type="text" name="editing" id="edit"></input>
 	</div>
 	<div id="button-container" style="padding-bottom: 25px">
 		<button type="button" class="btn btn-primary" id="add-chug">Add Chug</button>
@@ -56,6 +56,7 @@
 	ctxt = JSON.parse(ctxt)
 
 	var chugNum = 0;
+	var rules = {};
 	function getNewChug() {
 		var chugAdd = $("<div>")
 		var temp = `<div class="form-row">
@@ -74,13 +75,13 @@
 			<div class="form-group">`
 		for (var eidah of ["Aleph", "Vav", "Bet", "Gimmel", "Daled", "AV", "BGD", "All"]) {
 			temp += `<div class="form-check form-check-inline">
-							<input class="form-check-input" type="checkbox" id="eidot" name="eidot[${chugNum}]" value="${eidah.toLowerCase()}">
+							<input class="form-check-input eidot${chugNum}" type="checkbox" name="eidot[${chugNum}]" value="${eidah.toLowerCase()}">
 							<label class="form-check-label" for="${eidah.toLowerCase()}">${eidah}</label>
 						</div>`
 		}
 		temp += `</div></div><hr>`;
-		chugNum++;
 
+		chugNum++;
 		chugAdd.append(temp)
 		return chugAdd;
 	}
@@ -121,7 +122,7 @@
 			addChug(temp);
 		}
 
-		$("#edit").prop('checked', true);
+		$("#edit").val(ctxt.session.id);
 	}
 
 	$("#new-sesh-form").on("submit", function(event) {
@@ -146,6 +147,25 @@
 			alert("Please add chugim")
 			return false;
 		}
+
+		for (var i = 0; i < chugNum; i++) {
+			if ($(`.eidot${i}`).length && !$(`.eidot${i}:checked`).length) {
+				event.preventDefault();
+				var cont = $(`.eidot${i}`).parent().parent().parent().parent().find("#name")
+
+				cont.removeClass('is-invalid')
+				cont.next('.invalid-feedback').remove()
+
+				cont.addClass('is-invalid')
+				cont.after(`<div class="invalid-feedback">Please select eidot for this chug</div>`)
+
+				$(`.eidot${i}`).on('click', function() {
+					cont.removeClass('is-invalid')
+					cont.next('.invalid-feedback').remove();
+				})
+			}
+		}
+
 		
 	});
 </script>
