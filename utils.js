@@ -33,8 +33,8 @@ function writeChugData(obj, path) {
 
 function loadCamperPrefs(path) {
 	if (!fs.existsSync(path + "camper-prefs.json")) {
-		fs.writeFileSync(path + "camper-prefs.json", "{}")
-		return {}
+		fs.writeFileSync(path + "camper-prefs.json", "[]")
+		return []
 	}
 	return JSON.parse(fs.readFileSync(path + "camper-prefs.json"))
 }

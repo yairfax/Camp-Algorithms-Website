@@ -1,4 +1,15 @@
 <title>Rosh Sports Portal: {{session.name}}</title>
+
+<style>
+	.yellowmouse {
+		background-color: #efe66b;
+	}
+
+	.bluemouse {
+		background-color: #b3caef;
+	}
+</style>
+
 <div class="top-right">
 	<button class="btn btn-primary">Produce Chug List</button>
 	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Back to Entering</a>
@@ -17,6 +28,7 @@
 		<tr>
 			<th>Name</th>
 			<th>Eidah</th>
+			<th>Gender</th>
 			<th>Bunk</th>
 			<th>Choice 1</th>
 			<th>Choice 2</th>
@@ -25,8 +37,9 @@
 	</thead>
 	{{#each prefs}}
 	<tr class="trow" data-toggle="modal" data-target="#camperModal">
-		<td>{{@key}}</td>
+		<td>{{this.name}}</td>
 		<td>{{titleCase this.eidah}}</td>
+		<td>{{titleCase this.gender}}</td>
 		<td>{{titleCase this.bunk}}</td>
 		{{#each this.prefs}}
 		<td>{{titleCase this}}</td>
@@ -51,7 +64,7 @@
 			<form method="POST" action="/chugim/klugie?session={{session.id}}">
 				<div class="modal-body">
 					<div class="form-row">
-						<div class="form-group col-md-5">
+						<div class="form-group col-md-4">
 							<label for="name">Name</label>
 							<input type="text" class="form-control" id="name" name="name" readonly>
 						</div>
@@ -63,7 +76,14 @@
 								{{/each}}
 							</select>
 						</div>
-						<div class="form-group col-md-4">
+						<div class="form-group col-md-2">
+							<label for="gender">Gender</label>
+							<select class="custom-select" required id="gender" name="gender" required>
+								<option value="male">Male</option>
+								<option value="female">Female</option>
+							</select>
+						</div>
+						<div class="form-group col-md-3">
 							<label for="bunk">Bunk</label>
 							<select class="custom-select" required id="bunk" name="bunk"></select>
 						</div>
@@ -154,11 +174,10 @@
 	// Set coloring for tables
 	$(".trow").on({
 		'mouseenter': function() {
-			$(this).css("background-color", "#b3caef")},
+			$(this).addClass('bluemouse') },
 		'mouseleave': function() {
-			$(this).css("background-color", "white")},
+			$(this).removeClass('bluemouse') }
 	});
-
 
 	// Use modal presentation event
 	$("#camperModal").on("show.bs.modal", function(event) {
@@ -170,9 +189,10 @@
 		modal.find('#name').val(data[0].textContent)
 		modal.find('#eidah').val(data[1].textContent.toLowerCase())
 		bunksAndChugim(curEidah)
-		modal.find('#bunk').val(data[2].textContent.toLowerCase())
+		modal.find('#bunk').val(data[3].textContent.toLowerCase())
+		modal.find("#gender").val(data[2].textContent.toLowerCase())
 		for (var i = 1; i <= 3; i++) {
-			modal.find(`#pref${i}`).val(data[i+2].textContent.toLowerCase())
+			modal.find(`#pref${i}`).val(data[i+3].textContent.toLowerCase())
 		}
 	});
 
@@ -198,5 +218,5 @@
 				if (result === "Success") {window.location.replace(`/chugim/klugie`);}
 			}
 		})
-	})
+	});
 </script>

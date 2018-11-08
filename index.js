@@ -28,26 +28,31 @@ app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
 
-//Server
-
-//Chugim
-
-//Helper Functions
+//Helpers
 function writeCamper(obj, session) {
 	atomic('chug-key', function(done, key) {
 		var prefs = utils.loadCamperPrefs(session.path);
 
-		prefs[obj.name] = {
+		prefs = _.reject(prefs, function(elt) {
+			return elt.name === obj.name
+		})
+
+		prefs.push({
+			name: obj.name,
+			gender: obj.gender,
 			eidah: obj.eidah,
 			bunk: obj.bunk,
 			prefs: [obj.pref1, obj.pref2, obj.pref3]
-		}
+		})
+
 		utils.writeCamperPrefs(prefs, session.path);
 		done();
 	})
 }
 
-// Requests
+//Server
+
+//Chugim
 
 app.get("/", function(req, res) {
 	res.render('home');
@@ -75,6 +80,7 @@ app.post("/chugim", function(req, res) {
 	if (!session) return res.send("Please send a session");
 	session = _.findWhere(_sessions.sessions, {id: session});
 	if (!session) return res.send("Please send a valid session id");
+
 
 	writeCamper(req.body, session)
 
@@ -129,7 +135,9 @@ app.delete("/chugim/klugie", function(req, res) {
 	atomic('chug-key', function(done, key) {
 		var prefs = utils.loadCamperPrefs(session.path);
 
-		delete prefs[req.query.camper]
+		prefs = _.reject(prefs, function(elt) {
+			return elt.name === req.query.camper
+		})
 		
 		utils.writeCamperPrefs(prefs, session.path);
 		done();
