@@ -42,7 +42,7 @@ function writeCamper(obj, session) {
 			gender: obj.gender,
 			eidah: obj.eidah,
 			bunk: obj.bunk,
-			prefs: [obj.pref1, obj.pref2, obj.pref3]
+			prefs: obj.pref
 		})
 
 		utils.writeCamperPrefs(prefs, session.path);

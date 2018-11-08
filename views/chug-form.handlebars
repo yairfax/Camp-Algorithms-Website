@@ -7,8 +7,8 @@
   <p>Your response for {{name}} was recorded, please enter another camper's info.</p>
 </div>
 {{/if}}
-<label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, please see the Rosh Sports. Do <b><i>NOT</i></b> submit again!</label>
-<form method="POST" action="/chugim?session={{session.id}}">
+<label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, enter the camper's information again with the <b><i>exact</i></b> same name, or see the Rosh Sports.</label>
+<form method="POST" action="/chugim?session={{session.id}}" id="chug-form">
 	<div class="form-group">
 		<label for="name">Name</label>
 		<input type="text" class="form-control" placeholder="Name" name="name" required>
@@ -36,8 +36,9 @@
 	</div>
 	{{#each counter}}
 	<div class="form-group">
-		<label for="pref{{this}}">Select Number {{this}} Preference</label>
-		<select class="custom-select" required id="pref{{this}}-select" name="pref{{this}}"></select>
+		<label for="pref">Select Number {{this}} Preference</label>
+		<select class="custom-select pref" required name="pref"></select>
+		<div class='invalid-feedback'>Please select separate chugim!</div>
 	</div>
 	{{/each}}
 	<div style="padding-bottom: 25px"><button type="submit" class="btn btn-primary">Submit</button></div>
@@ -62,15 +63,41 @@
 			}
 
 			//Populate Chug List
-			for (var i = 1; i <= 3; i++) {
-					$(`#pref${i}-select`).empty()
-					$(`#pref${i}-select`).append(`<option value="" disabled selected>Select Preference ${i}</option`)
+			for (var row of $(".pref")) {
+					$(row).empty()
+					$(row).append(`<option disabled selected>Select Preference</option>`)
 			}
 			for (var chug of ctxt.chugim[eidah]) {
-				for (var i = 1; i <= 3; i++) {
-					$(`#pref${i}-select`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
-				}
+				$(`.pref`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
 			}
 		}
+	});
+
+	function sameIndeces(arr) {
+		for (var i = 0; i < arr.length - 1; i++) {
+			for (var j = i + 1; j < arr.length; j++) {
+				if (arr[i] === arr[j]) return [i, j]
+			}
+		}
+		return undefined;
+	}
+
+	$("#chug-form").submit(function(event) {
+		var arr = []
+		for (var i = 0; i < 3; i++) {
+			arr.push($(".pref")[i].value)
+		}
+		var inds = sameIndeces(arr)
+
+		if (inds) {
+			$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).addClass("is-invalid")
+			
+			$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).on('click', function() {
+				$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).removeClass('is-invalid')
+			})
+
+			event.preventDefault()
+		}
+
 	});
 </script>

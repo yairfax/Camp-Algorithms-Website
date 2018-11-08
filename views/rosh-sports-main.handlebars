@@ -90,8 +90,8 @@
 					</div>
 					{{#each counter}}
 					<div class="form-group">
-						<label for="pref{{this}}">Choice {{this}}</label>
-						<select class="custom-select" required id="pref{{this}}" name="pref{{this}}"></select>
+						<label for="pref">Choice {{this}}</label>
+						<select class="custom-select pref" required id="pref{{this}}" name="pref"></select>
 					</div>
 					{{/each}}
 				</div>
@@ -156,18 +156,15 @@
 		$("#bunk").empty();
 		$("#bunk").append(`<option value="" selected disabled>Select Bunk</option>`)
 		for (var bunk of ctxt.session.bunks[eidah]) {
-			$("#bunk").append(`<option value=${bunk.toLowerCase()}>${bunk}</option>`)
+			$("#bunk").append(`<option value="${bunk.toLowerCase()}">${bunk}</option>`)
 		}
 
 		//Populate Chug List
-		for (var i = 1; i <= 3; i++) {
-				$(`#pref${i}`).empty()
-				$(`#pref${i}`).append(`<option value="" disabled selected>Select Preference ${i}</option`)
-		}
+		$(`.pref`).empty()
+		$(`.pref`).append(`<option disabled selected>Select Preference</option`)
+
 		for (var chug of ctxt.chugim[eidah]) {
-			for (var i = 1; i <= 3; i++) {
-				$(`#pref${i}`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
-			}
+			$(`.pref`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
 		}
 	}
 
@@ -191,13 +188,13 @@
 		bunksAndChugim(curEidah)
 		modal.find('#bunk').val(data[3].textContent.toLowerCase())
 		modal.find("#gender").val(data[2].textContent.toLowerCase())
-		for (var i = 1; i <= 3; i++) {
-			modal.find(`#pref${i}`).val(data[i+3].textContent.toLowerCase())
+		for (var i = 0; i <= 2; i++) {
+			$(modal.find(`.pref`)[i]).val(data[i+4].textContent.toLowerCase())
 		}
 	});
 
 	$("#eidah").on("change", function() {
-		bunksAndChugim($(this)[0].value)
+		bunksAndChugim($(this).val())
 	});
 
 	$("#delete").on('click', function() {
