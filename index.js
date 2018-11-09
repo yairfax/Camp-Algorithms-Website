@@ -193,7 +193,8 @@ app.get("/chugim/klugie/newsession", function(req, res) {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
 		session: session,
 		chugim: utils.getFullChugim(session.path),
-		editing: true
+		editing: true,
+		sessionIDs: sessionIDs
 	})
 })
 

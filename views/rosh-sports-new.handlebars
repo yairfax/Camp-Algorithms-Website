@@ -6,6 +6,7 @@
 		<div class="form-group col-md-3">
 			<label for="year">Year</label>
 			<input class="form-control" type="number" id="year" name="year" min="2000" max="3000" required></input>
+			<div class="invalid-feedback">Session already exists</div>
 		</div>
 		<div class="form-group col-md-3">
 			<label for="session">Session</label>
@@ -62,6 +63,7 @@
 		var temp = `<div class="form-row">
 			<div class="form-group col-md-5">
 				<input class="form-control" id="name" type="text" placeholder="Chug Name" name="name" required></input>
+				<div class="invalid-feedback">Please select eidot for this chug</div>
 			</div>
 			<div class="form-group col-md-2">
 				<input class="form-control" id="pop" type="number" step=".1" min="0" max="1" name="popularity" placeholder="Popularity" required></input>
@@ -126,21 +128,15 @@
 	}
 
 	$("#new-sesh-form").on("submit", function(event) {
-		if (!ctxt.editing) {
-			var id = ($("#year").val() - 2000) + $(".session:checked").val()
-			if (ctxt.sessionIDs.includes(id)) {
+		var id = ($("#year").val() - 2000) + $(".session:checked").val()
+		if (ctxt.sessionIDs.includes(id) && id !== $("#edit").val()) {
+			$("#year").addClass('is-invalid')
+			$("#year").focus();
+
+			$("#year,.session").on('click', function() {
 				$("#year").removeClass('is-invalid');
-				$("#year").next('.invalid-feedback').remove();
-
-				$("#year").addClass('is-invalid')
-				$("#year").parent().append(`<div class="invalid-feedback">Session already exists</div>`)
-
-				$("#year,.session").on('click', function() {
-					$("#year").removeClass('is-invalid');
-					$("#year").next('.invalid-feedback').remove();
-				})
-				return false;
-			}
+			})
+			return false;
 		}
 
 		if($("#chug-container").is(":empty")) {
@@ -152,16 +148,11 @@
 			if ($(`.eidot${i}`).length && !$(`.eidot${i}:checked`).length) {
 				event.preventDefault();
 				var cont = $(`.eidot${i}`).parent().parent().parent().parent().find("#name")
-
-				cont.removeClass('is-invalid')
-				cont.next('.invalid-feedback').remove()
-
 				cont.addClass('is-invalid')
-				cont.after(`<div class="invalid-feedback">Please select eidot for this chug</div>`)
+				cont.focus();
 
 				$(`.eidot${i}`).on('click', function() {
 					cont.removeClass('is-invalid')
-					cont.next('.invalid-feedback').remove();
 				})
 			}
 		}
