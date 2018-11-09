@@ -32,7 +32,7 @@ app.use('/public', express.static('public'));
 function writeCamper(obj, session) {
 	atomic('chug-key', function(done, key) {
 		var prefs = utils.loadCamperPrefs(session.path);
-		
+
 		var ind = prefs.indexOf(_.findWhere(prefs, {name: obj.name}))
 
 		var newObj = {
@@ -64,9 +64,12 @@ app.get("/", function(req, res) {
 
 app.get("/chugim", function(req, res) {
 	var session = req.query.session;
-	if (!session) return res.render('chug-select', _sessions);
-	var sessionObj = _.findWhere(_sessions.sessions, {id: session})
-	if (!sessionObj) return res.render('chug-select', _sessions);
+	var sessions = {
+		sessions: _.where(_sessions.sessions, {active: true})
+	}
+	if (!session) return res.render('chug-select', sessions);
+	var sessionObj = _.findWhere(_sessions.sessions, {id: session, active: true})
+	if (!sessionObj) return res.render('chug-select', sessions);
 
 	res.render('chug-form', {
 		eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
@@ -82,8 +85,8 @@ app.get("/chugim", function(req, res) {
 app.post("/chugim", function(req, res) {
 	var session = req.query.session;
 	if (!session) return res.send("Please send a session");
-	session = _.findWhere(_sessions.sessions, {id: session});
-	if (!session) return res.send("Please send a valid session id");
+	session = _.findWhere(_sessions.sessions, {id: session, active: true});
+	if (!session) return res.send("Please send a valid session id, or session may be inactive.");
 
 	writeCamper(req.body, session)
 
@@ -123,8 +126,6 @@ app.post("/chugim/klugie", function(req, res) {
 	if (!session) return res.send("Please send a session");
 	session = _.findWhere(_sessions.sessions, {id: session});
 	if (!session) return res.send("Please send a valid session id");
-
-	console.log(req.body)
 
 	writeCamper(req.body, session)
 
@@ -226,7 +227,8 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 				bet: req.body.Bet,
 				gimmel: req.body.Gimmel,
 				daled: req.body.Daled
-			}
+			},
+			active: false
 		};
 
 		_sessions.sessions.push(newSesh);
@@ -287,6 +289,23 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 	})
 
 	res.redirect("/chugim/klugie?session=" + id);
+})
+
+app.post("/chugim/klugie/activate", function(req, res){
+	var id = req.query.session;
+	if (!id) return res.send("please send a session id");
+	var session = _.findWhere(_sessions.sessions, {id: id});
+	if (!session) return res.send("please send a valid session id");
+
+	atomic("chug-key", function(done, key) {
+		session.active = !session.active;
+
+		utils.writeSession(_sessions);
+
+		done();
+	})
+
+	res.send("Success")
 })
 
 app.listen(PORT, function() {

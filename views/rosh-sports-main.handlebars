@@ -8,9 +8,15 @@
 	.bluemouse {
 		background-color: #b3caef;
 	}
+
 </style>
 
 <div class="top-right">
+	{{#if session.active}}
+	<button id="activate" class="btn btn-secondary">Deactivate</button>
+	{{else}}
+	<button id="activate" class="btn btn-success">Activate</button>
+	{{/if}}
 	<button id="produceList" class="btn btn-primary">Produce Chug List</button>
 	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Enter Camper Data</a>
 	<a href="/chugim/klugie" class="btn btn-primary" role="button">Select Another Session</a>
@@ -21,6 +27,12 @@
 <h1>{{session.name}}</h1>
 <p>Camper Preferences
 	<span style="float:right;">{{length prefs}} Campers Entered</span>
+</p>
+{{#if session.active}}
+<p style="text-align: center; color: #049309; font-size: 16pt"><b>Session Active</b></p>
+{{else}}
+<p style="text-align: center; color: #ba1209; font-size: 16pt">Session Inactive</p>
+{{/if}}
 </p>
 {{#if areCampers}}
 <table class="table">
@@ -231,4 +243,11 @@
 		$("#produceList").attr('data-toggle', 'modal');
 		$("#produceList").attr('data-target', '#attnRequired')
 	}
+
+	//Activation
+	$("#activate").on('click', function() {
+		$.post(`/chugim/klugie/activate?session=${ctxt.session.id}`, function(data) {
+			if (data === "Success") window.location.reload()
+		})
+	});
 </script>
