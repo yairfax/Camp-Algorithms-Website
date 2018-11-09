@@ -32,18 +32,22 @@ app.use('/public', express.static('public'));
 function writeCamper(obj, session) {
 	atomic('chug-key', function(done, key) {
 		var prefs = utils.loadCamperPrefs(session.path);
+		
+		var ind = prefs.indexOf(_.findWhere(prefs, {name: obj.name}))
 
-		prefs = _.reject(prefs, function(elt) {
-			return elt.name === obj.name
-		})
-
-		prefs.push({
+		var newObj = {
 			name: obj.name,
 			gender: obj.gender,
 			eidah: obj.eidah,
 			bunk: obj.bunk,
 			prefs: obj.pref
-		})
+		}
+		
+		if (ind != -1) {
+			prefs[ind] = newObj
+		} else {
+			prefs.push(newObj)
+		}
 
 		utils.writeCamperPrefs(prefs, session.path);
 		done();
@@ -80,7 +84,6 @@ app.post("/chugim", function(req, res) {
 	if (!session) return res.send("Please send a session");
 	session = _.findWhere(_sessions.sessions, {id: session});
 	if (!session) return res.send("Please send a valid session id");
-
 
 	writeCamper(req.body, session)
 
@@ -120,6 +123,8 @@ app.post("/chugim/klugie", function(req, res) {
 	if (!session) return res.send("Please send a session");
 	session = _.findWhere(_sessions.sessions, {id: session});
 	if (!session) return res.send("Please send a valid session id");
+
+	console.log(req.body)
 
 	writeCamper(req.body, session)
 

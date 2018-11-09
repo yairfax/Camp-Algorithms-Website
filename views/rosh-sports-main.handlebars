@@ -2,7 +2,7 @@
 
 <style>
 	.yellowmouse {
-		background-color: #efe66b;
+		background-color: #ffeb56;
 	}
 
 	.bluemouse {
@@ -11,10 +11,10 @@
 </style>
 
 <div class="top-right">
-	<button class="btn btn-primary">Produce Chug List</button>
-	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Back to Entering</a>
+	<button id="produceList" class="btn btn-primary">Produce Chug List</button>
+	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Enter Camper Data</a>
 	<a href="/chugim/klugie" class="btn btn-primary" role="button">Select Another Session</a>
-	<button data-toggle="modal" data-target="#editWarning" class="btn btn-warning">Edit Session</button>
+	<a href="/chugim/klugie/newsession?session={{session.id}}" class="btn btn-primary" role="button">Edit Session</a>
 	<button data-toggle="modal" data-target="#deleteWarning" class="btn btn-danger">Delete Session</button>
 </div>
 
@@ -124,28 +124,27 @@
 	</div>
 </div>
 
-<!-- Edit Warning -->
-<div class="modal fade" id="editWarning" style="text-align: center">
+<!-- Camper Inconsistencies -->
+<div class="modal fade" id="attnRequired">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title" id="modalTitle">Warning: Unsafe Action!</h5>
+				<h5 class="modal-title" id="modalTitle">Action Required</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 			<div class="modal-body">
-				<p style="text-align: justify">Are you sure you want to edit the session? If you edit existing chug names and campers have already entered their preferences, the program later <b><i>will</i></b> fail.</p>
-				<button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
-				<a href="/chugim/klugie/newsession?session={{session.id}}" class="btn btn-warning" role="button">Yes, Edit Session</a>
+				There are <a id="attnNum"></a> campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
 			</div>
 		</div>
 	</div>
 </div>
 
 <script>
-	var curEidah = ""
-
 	//Crap to convert context into local JSON
 	var ctxt = "{{stringify this}}";
 	ctxt = ctxt.replace(/&quot;/gi, '\"')
@@ -168,24 +167,15 @@
 		}
 	}
 
-	// Set coloring for tables
-	$(".trow").on({
-		'mouseenter': function() {
-			$(this).addClass('bluemouse') },
-		'mouseleave': function() {
-			$(this).removeClass('bluemouse') }
-	});
-
 	// Use modal presentation event
 	$("#camperModal").on("show.bs.modal", function(event) {
 		var row = $(event.relatedTarget)
 		data = row.find('td')
 		modal = $(this)
-		curEidah = data[1].textContent.toLowerCase()
 		
 		modal.find('#name').val(data[0].textContent)
 		modal.find('#eidah').val(data[1].textContent.toLowerCase())
-		bunksAndChugim(curEidah)
+		bunksAndChugim(data[1].textContent.toLowerCase())
 		modal.find('#bunk').val(data[3].textContent.toLowerCase())
 		modal.find("#gender").val(data[2].textContent.toLowerCase())
 		for (var i = 0; i <= 2; i++) {
@@ -216,4 +206,29 @@
 			}
 		})
 	});
+
+
+	// Set coloring for tables
+	$(".trow").on({
+		'mouseenter': function() {
+			$(this).addClass('bluemouse') },
+		'mouseleave': function() {
+			$(this).removeClass('bluemouse') }
+	});
+
+	// Check for inconsistencies
+	for (var row of $(".trow")) {
+		var eidah = $(row).find('td')[1].innerText.toLowerCase();
+		for (var chug of $(row).find('td').slice(4)) {
+			if (!ctxt.chugim[eidah].map(function(str) {return str.toLowerCase()}).includes(chug.innerText.toLowerCase())) {
+				$(row).addClass('yellowmouse');
+			}
+		}
+	}
+
+	if($(".trow.yellowmouse").length) {
+		$("#attnNum").text($(".trow.yellowmouse").length);
+		$("#produceList").attr('data-toggle', 'modal');
+		$("#produceList").attr('data-target', '#attnRequired')
+	}
 </script>
