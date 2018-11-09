@@ -10,6 +10,16 @@ var utils = require('./utils.js');
 var _sessions = require('./sessions/sessions.json');
 var atomic = require('atomic')();
 var execFile = require('child_process');
+var dotenv = require('dotenv');
+var mongoose = require('mongoose');
+
+//MongoDB
+dotenv.load()
+mongoose.connect(process.env.MONGODB, { useNewUrlParser: true })
+mongoose.connection.on('error', function(err) {
+	console.log("Connection was unable to take place")
+	process.exit(1);
+});
 
 //Handlebars stuff
 var hbs = exphbs.create({
@@ -27,6 +37,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
+
 
 //Helpers
 function writeCamper(obj, session) {
