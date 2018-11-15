@@ -103,7 +103,7 @@
 					{{#each counter}}
 					<div class="form-group">
 						<label for="pref">Choice {{this}}</label>
-						<select class="custom-select pref" required id="pref{{this}}" name="pref"></select>
+						<select class="custom-select pref" required id="pref{{this}}" name="prefs"></select>
 					</div>
 					{{/each}}
 				</div>
@@ -246,7 +246,7 @@
 
 	//Activation
 	$("#activate").on('click', function() {
-		$.post(`/chugim/klugie/activate?session=${ctxt.session.id}`, function(data) {
+		$.post(`/chugim/klugie/activate?session=${ctxt.session._id}`, function(data) {
 			if (data === "Success") window.location.reload()
 		})
 	});

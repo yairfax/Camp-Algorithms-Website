@@ -2,8 +2,7 @@ var fs = require('fs')
 var _ = require('underscore');
 var capitalize = require('capitalize');
 
-function getChugim(path) {
-	var obj = JSON.parse(fs.readFileSync(path + "klugim-info.json"))
+function getChugim(obj) {
 	var chugim = {
 		aleph: [],
 		vav: [],
@@ -14,7 +13,7 @@ function getChugim(path) {
 
 	// For each chug, calculate eidot with that chug and put into that array in the object
 	_.each(chugim, function(arr, eidah) {
-		var filtered = _.filter(obj, function(elt) {
+		var filtered = _.filter(obj.klugim, function(elt) {
 			return (elt.eidot.includes(eidah));
 		}) 
 		chugim[eidah] = _.pluck(filtered, 'name')
@@ -59,6 +58,10 @@ function titleCase(str) {
 	}).join(' ');
 }
 
+function callbackErr (err) {
+	if (err) throw err;
+}
+
 module.exports = {
 	getChugim: getChugim,
 	writeCamperPrefs: writeCamperPrefs,
@@ -67,6 +70,7 @@ module.exports = {
 	writeSession: writeSession,
 	readSessions, readSessions,
 	writeChugData: writeChugData,
-	getFullChugim: getFullChugim
+	getFullChugim: getFullChugim,
+	callbackErr: callbackErr
 }
 

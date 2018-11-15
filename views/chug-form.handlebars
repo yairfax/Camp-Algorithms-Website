@@ -7,11 +7,12 @@
   <p>Your response for {{name}} was recorded, please enter another camper's info.</p>
 </div>
 {{/if}}
-<label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, enter the camper's information again with the <b><i>exact</i></b> same name, or see the Rosh Sports.</label>
-<form method="POST" action="/chugim?session={{session.id}}" id="chug-form">
+<label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, <b><i>DO NOT</i></b> fill out this form again. Please see the rosh sports to make changes.</label>
+<form method="POST" action="/chugim?session={{session._id}}" id="chug-form">
 	<div class="form-group">
 		<label for="name">Name</label>
-		<input type="text" class="form-control" placeholder="Name" name="name" required>
+		<input type="text" class="form-control" placeholder="Name" name="name" id="name" required>
+		<div class='invalid-feedback'>Camper already entered. To make changes please see the Rosh Sports. DO NOT try to enter the camper again here.</div>
 	</div>
 	<div class="form-group">
 		<label for="eidah">Eidah</label>
@@ -36,8 +37,8 @@
 	</div>
 	{{#each counter}}
 	<div class="form-group">
-		<label for="pref">Select Number {{this}} Preference</label>
-		<select class="custom-select pref" required name="pref"></select>
+		<label for="prefs">Select Number {{this}} Preference</label>
+		<select class="custom-select pref" required name="prefs"></select>
 		<div class='invalid-feedback'>Please select separate chugim!</div>
 	</div>
 	{{/each}}
@@ -82,6 +83,13 @@
 		return undefined;
 	}
 
+	function camperExists(name) {
+		for (var camper of ctxt.session.campers) {
+			if (camper.name === name) return true;
+		}
+		return false;
+	}
+
 	$("#chug-form").submit(function(event) {
 		var arr = []
 		for (var i = 0; i < 3; i++) {
@@ -96,6 +104,16 @@
 				$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).removeClass('is-invalid')
 			})
 
+			event.preventDefault()
+		}
+
+		if (camperExists($("#name").val())) {
+			$("#name").addClass('is-invalid');
+			$("#name").focus();
+
+			$("#name").on('click', function() {
+				$("#name").removeClass('is-invalid');
+			})
 			event.preventDefault()
 		}
 

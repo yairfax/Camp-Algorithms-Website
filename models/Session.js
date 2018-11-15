@@ -13,6 +13,13 @@ var klugSchema = new mongoose.Schema({
 	},
 	eidot: {
 		type: [String],
+		enum: ['aleph', 'vav', 'bet', 'gimmel', 'daled'],
+		required: true
+	},
+	capacity: {
+		type: Number,
+		min: 0,
+		max: 200,
 		required: true
 	}
 })
@@ -24,11 +31,13 @@ var camperSchema = new mongoose.Schema({
 	},
 	eidah: {
 		type: String,
-		required: true
+		required: true,
+		enum: ['aleph', 'vav', 'bet', 'gimmel', 'daled']
 	},
 	gender: {
 		type: String,
-		required: true
+		required: true,
+		enum: ['male', 'female']
 	},
 	bunk: {
 		type: String,
@@ -41,6 +50,10 @@ var camperSchema = new mongoose.Schema({
 })
 
 var sessionSchema = new mongoose.Schema({
+	_id: {
+		type: String,
+		required: true
+	},
 	name: {
 		type: String,
 		required: true
@@ -53,10 +66,7 @@ var sessionSchema = new mongoose.Schema({
 	},
 	session: {
 		type: String,
-		required: true
-	},
-	id: {
-		type: String,
+		enum: ['i', 'ii'],
 		required: true
 	},
 	bunks: {
