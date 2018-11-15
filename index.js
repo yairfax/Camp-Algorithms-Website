@@ -7,7 +7,6 @@ var handlebars = exphbs.handlebars;
 var app = express();
 var PORT = 3000;
 var utils = require('./utils.js');
-var _sessions = require('./sessions/sessions.json');
 var atomic = require('atomic')();
 var execFile = require('child_process');
 var dotenv = require('dotenv');
@@ -38,30 +37,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
-
-
-//Helpers
-function formatCamper(obj, session) {
-	var prefs = session.campers;
-
-	var ind = prefs.indexOf(_.findWhere(prefs, {name: obj.name}))
-
-	var newObj = {
-		name: obj.name,
-		gender: obj.gender,
-		eidah: obj.eidah,
-		bunk: obj.bunk,
-		prefs: obj.pref
-	}
-	
-	if (ind != -1) {
-		prefs[ind] = newObj
-	} else {
-		prefs.push(newObj)
-	}
-
-	return prefs
-}
 
 //Server
 
@@ -235,7 +210,6 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 	// Session file writing
 	var newSesh = {
 		_id: id,
-		path: "sessions/" + id + "/",
 		name: req.body.year + " " + req.body.session.toUpperCase(),
 		year: parseInt(req.body.year),
 		session: req.body.session,
@@ -292,10 +266,13 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 
 	if (editing && editing !== id) {
 		atomic('chug-key', function(done, key) {
-			Session.findByIdAndRemove(editing, utils.callbackErr)
-			var addSesh = new Session(newSesh)
-			addSesh.save(utils.callbackErr)
-
+			Session.findByIdAndRemove(editing, function(err, data) {
+				if (err) throw err;
+				newSesh.campers = data.campers;
+				newSesh.active = data.active;
+				addSesh = new Session(newSesh);
+				addSesh.save();
+			})
 			done();
 		})
 	} else if (editing) {
