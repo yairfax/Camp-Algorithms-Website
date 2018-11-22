@@ -219,8 +219,7 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 			bet: req.body.Bet,
 			gimmel: req.body.Gimmel,
 			daled: req.body.Daled
-		},
-		active: false
+		}
 	};
 
 	//Some cleaning
@@ -278,6 +277,7 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 	} else if (editing) {
 		Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
 	} else {
+		newSesh.active = false;
 		var addSesh = new Session(newSesh)
 		addSesh.save(utils.callbackErr)
 	}

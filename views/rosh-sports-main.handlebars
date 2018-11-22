@@ -12,16 +12,23 @@
 </style>
 
 <div class="top-right">
-	{{#if session.active}}
-	<button id="activate" class="btn btn-secondary">Deactivate</button>
-	{{else}}
-	<button id="activate" class="btn btn-success">Activate</button>
-	{{/if}}
-	<button id="produceList" class="btn btn-primary">Produce Chug List</button>
-	<a href="/chugim?session={{sessionID}}" class="btn btn-primary" role="button">Enter Camper Data</a>
-	<a href="/chugim/klugie" class="btn btn-primary" role="button">Select Another Session</a>
-	<a href="/chugim/klugie/newsession?session={{session.id}}" class="btn btn-primary" role="button">Edit Session</a>
-	<button data-toggle="modal" data-target="#deleteWarning" class="btn btn-danger">Delete Session</button>
+	<div class="btn-group">
+		<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			Options
+		</button>
+		<div class="dropdown-menu dropdown-menu-right">
+			{{#if session.active}}
+			<button id="activate" class="dropdown-item">Deactivate</button>
+			{{else}}
+			<button id="activate" class="dropdown-item">Activate</button>
+			{{/if}}
+			<button id="produceList" class="dropdown-item">Produce Chug List</button>
+			<a href="/chugim?session={{sessionID}}" class="dropdown-item">Enter Camper Data</a>
+			<a href="/chugim/klugie" class="dropdown-item">Select Another Session</a>
+			<a href="/chugim/klugie/newsession?session={{session.id}}" class="dropdown-item">Edit Session</a>
+			<button data-toggle="modal" data-target="#deleteWarning" class="dropdown-item">Delete Session</button>
+		</div>
+	</div>
 </div>
 
 <h1>{{session.name}}</h1>
@@ -136,26 +143,6 @@
 	</div>
 </div>
 
-<!-- Camper Inconsistencies -->
-<div class="modal fade" id="attnRequired">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="modalTitle">Action Required</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body">
-				There are <a id="attnNum"></a> campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
-			</div>
-		</div>
-	</div>
-</div>
-
 <script>
 	//Crap to convert context into local JSON
 	var ctxt = "{{stringify this}}";
@@ -239,9 +226,9 @@
 	}
 
 	if($(".trow.yellowmouse").length) {
-		$("#attnNum").text($(".trow.yellowmouse").length);
-		$("#produceList").attr('data-toggle', 'modal');
-		$("#produceList").attr('data-target', '#attnRequired')
+		$("#produceList").on('click', function() {
+			alert(`There are ${$(".trow.yellowmouse").length} campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
+		})
 	}
 
 	//Activation
