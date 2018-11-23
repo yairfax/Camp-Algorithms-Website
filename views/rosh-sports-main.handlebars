@@ -41,34 +41,72 @@
 <p style="text-align: center; color: #ba1209; font-size: 16pt">Session Inactive</p>
 {{/if}}
 </p>
-{{#if areCampers}}
-<table class="table">
-	<thead>
-		<tr>
-			<th>Name</th>
-			<th>Eidah</th>
-			<th>Gender</th>
-			<th>Bunk</th>
-			<th>Choice 1</th>
-			<th>Choice 2</th>
-			<th>Choice 3</th>
-		</tr>
-	</thead>
-	{{#each prefs}}
-	<tr class="trow" data-toggle="modal" data-target="#camperModal">
-		<td>{{this.name}}</td>
-		<td>{{titleCase this.eidah}}</td>
-		<td>{{titleCase this.gender}}</td>
-		<td>{{titleCase this.bunk}}</td>
-		{{#each this.prefs}}
-		<td>{{titleCase this}}</td>
-		{{/each}}
-	</tr>
-	{{/each}}
-</table>
-{{else}}
-<h3 style="text-align: center">No Campers Entered Yet</h3>
-{{/if}}
+
+<ul class="nav nav-tabs justify-content-center" role="tablist">
+	<li class="nav-item">
+		<a class="nav-link active" id="camper-tab" data-toggle="tab" href="#campers-view" role="tab" aria-controls="camper-view" aria-selected="true">Campers</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link" id="chug-tab" data-toggle="tab" href="#chug-view" role="tab" aria-controls="chug-view" aria-selected="true">Chugim</a>
+	</li>
+</ul>
+
+<div class="tab-content">
+	<div class="tab-pane fade show active" id="campers-view" role="tabpanel" aria-labelledby="camper-tab">
+		{{#if areCampers}}
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Eidah</th>
+					<th>Gender</th>
+					<th>Bunk</th>
+					<th>Choice 1</th>
+					<th>Choice 2</th>
+					<th>Choice 3</th>
+				</tr>
+			</thead>
+			{{#each prefs}}
+			<tr class="trow camper-row" data-toggle="modal" data-target="#camperModal">
+				<td>{{this.name}}</td>
+				<td>{{titleCase this.eidah}}</td>
+				<td>{{titleCase this.gender}}</td>
+				<td>{{titleCase this.bunk}}</td>
+				{{#each this.prefs}}
+				<td>{{titleCase this}}</td>
+				{{/each}}
+			</tr>
+			{{/each}}
+		</table>
+		{{else}}
+		<h3 style="text-align: center; padding: 20px">No Campers Entered Yet</h3>
+		{{/if}}
+	</div>
+	<div class="tab-pane fade" id="chug-view" role="tabpanel" aria-labelledby="chug-tab">
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Capacity</th>
+					<th>Popularity</th>
+					<th>Eidot</th>
+				</tr>
+			</thead>
+			{{#each session.klugim}}
+			<tr class="trow">
+				<td>{{titleCase this.name}}</td>
+				<td>{{this.capacity}}</td>
+				<td>{{this.popularity}}</td>
+				<td>
+					{{#each this.eidot}}
+					{{titleCase this}}
+					{{/each}}
+				</td>
+			</tr>
+			{{/each}}
+		</table>
+	</div>
+</div>
 
 <!-- Camper Modal -->
 <div class="modal fade" id="camperModal" >
@@ -208,7 +246,7 @@
 
 
 	// Set coloring for tables
-	$(".trow").on({
+	$(".camper-row").on({
 		'mouseenter': function() {
 			$(this).addClass('bluemouse') },
 		'mouseleave': function() {
@@ -216,7 +254,7 @@
 	});
 
 	// Check for inconsistencies
-	for (var row of $(".trow")) {
+	for (var row of $(".camper-row")) {
 		var eidah = $(row).find('td')[1].innerText.toLowerCase();
 		for (var chug of $(row).find('td').slice(4)) {
 			if (!ctxt.chugim[eidah].map(function(str) {return str.toLowerCase()}).includes(chug.innerText.toLowerCase())) {
@@ -225,7 +263,7 @@
 		}
 	}
 
-	if($(".trow.yellowmouse").length) {
+	if($(".camper-row.yellowmouse").length) {
 		$("#produceList").on('click', function() {
 			alert(`There are ${$(".trow.yellowmouse").length} campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
 		})
