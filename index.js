@@ -12,6 +12,7 @@ var execFile = require('child_process');
 var dotenv = require('dotenv');
 var mongoose = require('mongoose');
 var Session = require('./models/Session.js');
+var expstate = require('express-state')
 
 //MongoDB
 dotenv.load()
@@ -38,6 +39,10 @@ app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
 
+// Set up express-state
+expstate.extend(app);
+app.set("state namespace", 'ctxt'); 
+
 //Server
 
 //Chugim
@@ -53,10 +58,12 @@ function renderChugPage(repeat, req, res) {
 		if (!session) return res.render('chug-select', {sessions: sessions});
 		Session.findOne({_id: session, active: true}, function(err, session) {
 			if (!session) return res.render('chug-select', sessions);
+
+			res.expose(session.bunks, "bunks");
+			res.expose(utils.getChugim(session), "chugim");
+			res.expose(session, "session");
 			res.render('chug-form', {
 				eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
-				bunks: session.bunks,
-				chugim: utils.getChugim(session),
 				counter: [1, 2, 3],
 				session: session,
 				repeat: repeat,
@@ -79,7 +86,6 @@ app.post("/chugim", function(req, res) {
 		if (err) throw err;
 		renderChugPage(true, req, res)
 	});
-
 });
 
 //Rosh Sports Side
@@ -92,16 +98,18 @@ app.get("/chugim/klugie", function(req, res) {
 
 		Session.findById(sessionID, function(err, session) {
 			if (err) throw err;
-
 			if (!session) return res.render('rosh-sports-select', {sessions: sessions});
 
+			res.expose(session, "session");
+			res.expose(utils.getChugim(session), "chugim");
+			res.expose(sessionID, "sessionID");
+			res.expose(session, "session");
 			res.render('rosh-sports-main', {
 				sessionID: sessionID,
 				prefs: session.campers,
 				session: session,
 				eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
 				counter: [1, 2, 3],
-				chugim: utils.getChugim(session),
 				areCampers: !(_.isEmpty(session.campers))
 			});
 		});
@@ -140,9 +148,9 @@ app.delete("/chugim/klugie", function(req, res) {
 	if (!session) return res.send("Please send a session");
 	Session.findByIdAndUpdate(session, {$pull:{campers:{name:req.query.camper}}}, function(err, data) {
 		if (!data) return res.send("please send a valid id");
-		res.send("Success")
-	})
-})
+		res.send("Success");
+	});
+});
 
 //Session creation and deletion
 app.delete("/chugim/klugie/newsession", function(req, res) {
@@ -151,9 +159,9 @@ app.delete("/chugim/klugie/newsession", function(req, res) {
 	Session.findByIdAndDelete(session, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a valid session id");
-		res.send("Success")
-	})	
-})
+		res.send("Success");
+	});
+});
 
 app.get("/chugim/klugie/newsession", function(req, res) {
 	var eidot = ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]
@@ -166,24 +174,24 @@ app.get("/chugim/klugie/newsession", function(req, res) {
 	
 		var id = req.query.session;
 		// If no ID passed in.
+		res.expose(sessionIDs, "sessionIDs");
 		if (!id) return res.render('rosh-sports-new', {
-			eidot: eidot,
-			sessionIDs: sessionIDs
+			eidot: eidot
 		});
 
-		// If session doesn't exist
-		var session = _.findWhere(data, {_id: id});
-		if (!session) return res.render('rosh-sports-new', {
-			eidot: eidot,
-			sessionIDs: sessionIDs
-		});
+		Session.findById(id, function(err, session) {
+			if (err) throw err;
+			if (!session) return res.render('rosh-sports-new', {
+				eidot: eidot
+			});
 
-		res.render('rosh-sports-new', {
-			eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
-			session: session,
-			chugim: session.klugim,
-			editing: true,
-			sessionIDs: sessionIDs
+			res.expose(true, "editing");
+			res.expose(session, "session");
+			res.expose(eidot, "eidot");
+			res.expose(session.klugim, "chugim");
+			res.render('rosh-sports-new', {
+				eidot: eidot
+			});
 		});
 	});
 });
