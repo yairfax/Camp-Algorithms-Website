@@ -12,11 +12,8 @@ var execFile = require('child_process');
 var dotenv = require('dotenv');
 var mongoose = require('mongoose');
 var Session = require('./models/Session.js');
-<<<<<<< HEAD
 var expstate = require('express-state');
-=======
-var expstate = require('express-state')
->>>>>>> express-state
+
 
 //MongoDB
 dotenv.load()
