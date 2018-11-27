@@ -12,6 +12,7 @@ var execFile = require('child_process');
 var dotenv = require('dotenv');
 var mongoose = require('mongoose');
 var Session = require('./models/Session.js');
+var expstate = require('express-state');
 
 //MongoDB
 dotenv.load()
@@ -37,6 +38,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
+
+//Setup express-state
+expstate.extend(app);
+app.set('state namespace', 'ctxt')
 
 //Server
 
@@ -70,7 +75,6 @@ app.get("/chugim", function(req, res) {
 	renderChugPage(false, req, res)
 });
 
-// TODO: Fix updated session passed in
 app.post("/chugim", function(req, res) {
 	var id = req.query.session;
 	if (!id) return res.send("Please send a session");
