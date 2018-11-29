@@ -79,10 +79,17 @@
 	}
 
 	function camperExists(name) {
-		for (var camper of ctxt.session.campers) {
-			if (camper.name.toLowerCase().startsWith(name.toLowerCase()) || name.toLowerCase().startsWith(camper.name.toLowerCase())) return true;
-		}
-		return false;
+		var ret = false;
+		$.ajax({
+			url: "/api/chugim/campers?session=" + ctxt.session._id,
+			success: function(data) {
+				for (var camper of data) {
+					if (camper.name.toLowerCase().startsWith(name.toLowerCase()) || name.toLowerCase().startsWith(camper.name.toLowerCase())) ret = true;
+				}
+			},
+			async: false
+		})	
+		return ret
 	}
 
 	$("#chug-form").submit(function(event) {
