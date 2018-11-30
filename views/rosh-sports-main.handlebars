@@ -19,11 +19,12 @@
 		<div class="dropdown-menu dropdown-menu-right">
 			{{#if session.active}}
 			<button id="activate" class="dropdown-item">Deactivate</button>
+			<a href="/chugim?session={{sessionID}}" class="dropdown-item">Enter Camper Data</a>
 			{{else}}
 			<button id="activate" class="dropdown-item">Activate</button>
+			<a id="enter-campers-invalid" class="dropdown-item">Enter Camper Data</a>
 			{{/if}}
 			<button id="produceList" class="dropdown-item">Produce Chug List</button>
-			<a href="/chugim?session={{sessionID}}" class="dropdown-item">Enter Camper Data</a>
 			<a href="/chugim/klugie" class="dropdown-item">Select Another Session</a>
 			<a href="/chugim/klugie/newsession?session={{session.id}}" class="dropdown-item">Edit Session</a>
 			<button data-toggle="modal" data-target="#deleteWarning" class="dropdown-item">Delete Session</button>
@@ -269,5 +270,9 @@
 		$.post(`/chugim/klugie/activate?session=${ctxt.session._id}`, function(data) {
 			if (data === "Success") window.location.reload()
 		})
+	});
+
+	$("#enter-campers-invalid").on('click', function() {
+		alert("Please activate session to enter camper data.")
 	});
 </script>
