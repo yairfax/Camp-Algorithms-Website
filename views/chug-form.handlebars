@@ -110,9 +110,9 @@
 			event.preventDefault()
 		}
 
-		if ($("#name").val().match(/[\(\)\-]/)) {
+		if ($("#name").val().match(/[\(\)]/)) {
 			var init = $("name-feedback").text();
-			$("#name-feedback").text(`Invalid character: ${$("#name").val().match(/[\(\)\-]/)[0]}`);
+			$("#name-feedback").text(`Invalid character: ${$("#name").val().match(/[\(\)]/)[0]}`);
 
 			$("#name").addClass('is-invalid');
 			$("#name").focus();
