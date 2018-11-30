@@ -39,6 +39,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
+const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
+const upperEidot = _.map(lowerEidot, utils.titleCase)
 
 // Set up express-state
 expstate.extend(app);
@@ -64,7 +66,7 @@ function renderChugPage(repeat, req, res) {
 			res.expose(utils.getChugim(session), "chugim");
 			res.expose(session, "session");
 			res.render('chug-form', {
-				eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
+				eidot: upperEidot,
 				counter: [1, 2, 3],
 				session: session,
 				repeat: repeat,
@@ -106,9 +108,11 @@ app.get("/chugim/klugie", function(req, res) {
 			res.expose(session, "session");
 			res.render('rosh-sports-main', {
 				sessionID: sessionID,
-				prefs: session.campers,
+				prefs: _.sortBy(session.campers, function(elt) {
+					return lowerEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]
+				}),
 				session: session,
-				eidot: ["Aleph", "Vav", "Bet", "Gimmel", "Daled"],
+				eidot: upperEidot,
 				counter: [1, 2, 3],
 				areCampers: !(_.isEmpty(session.campers))
 			});
