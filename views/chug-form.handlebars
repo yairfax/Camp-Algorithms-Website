@@ -12,7 +12,7 @@
 	<div class="form-group">
 		<label for="name">Name</label>
 		<input type="text" class="form-control" placeholder="Name" name="name" id="name" required>
-		<div class='invalid-feedback'>Camper already entered. To make changes please see the Rosh Sports. DO NOT try to enter the camper again here.</div>
+		<div class='invalid-feedback' id="name-feedback">Camper already entered. To make changes please see the Rosh Sports. DO NOT try to enter the camper again here.</div>
 	</div>
 	<div class="form-group">
 		<label for="eidah">Eidah</label>
@@ -84,7 +84,7 @@
 			url: "/api/chugim/campers?session=" + ctxt.session._id,
 			success: function(data) {
 				for (var camper of data) {
-					if (camper.name.toLowerCase().startsWith(name.toLowerCase()) || name.toLowerCase().startsWith(camper.name.toLowerCase())) ret = true;
+					if (camper.name.toLowerCase().match(new RegExp(name.toLowerCase())) || name.toLowerCase().match(new RegExp (camper.name.toLowerCase()))) ret = true;
 				}
 			},
 			async: false
@@ -107,6 +107,20 @@
 				$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).removeClass('is-invalid')
 			})
 
+			event.preventDefault()
+		}
+
+		if ($("#name").val().match(/[\(\)\-]/)) {
+			var init = $("name-feedback").text();
+			$("#name-feedback").text(`Invalid character: ${$("#name").val().match(/[\(\)\-]/)[0]}`);
+
+			$("#name").addClass('is-invalid');
+			$("#name").focus();
+
+			$("#name").on('click', function() {
+				$("#name").removeClass('is-invalid');
+				$("name-feedback").text(init);
+			})
 			event.preventDefault()
 		}
 
