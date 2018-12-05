@@ -314,7 +314,6 @@ app.get('/api/chugim/campers', function(req, res) {
 	})
 })
 
-app.listen(PORT, function() {
-	execFile.execFile("open", ['http://localhost:3000']);
-	console.log("Camp algorithms server listening on:", PORT);
-})
+app.listen(process.env.PORT || 3000, function() {
+    console.log('Listening!');
+});
