@@ -52,114 +52,13 @@ app.set("state namespace", 'ctxt');
 
 app.get("/", function(req, res) {
 	res.render('home');
-})
-
-
-function renderChugPage(repeat, req, res) {
-	Session.find({active: true}, function(err, sessions) {
-		var session = req.query.session;
-		if (!session) return res.render('chug-select', {sessions: sessions});
-		Session.findOne({_id: session, active: true}, function(err, session) {
-			if (!session) return res.render('chug-select', sessions);
-
-			res.expose(session.bunks, "bunks");
-			res.expose(utils.getChugim(session), "chugim");
-			res.expose(session, "session");
-			res.render('chug-form', {
-				eidot: upperEidot,
-				counter: [1, 2, 3],
-				session: session,
-				repeat: repeat,
-				name: req.body.name
-			});
-		});
-	});
-}
-
-app.get("/chugim", function(req, res) {
-	renderChugPage(false, req, res)
 });
 
-app.post("/chugim", function(req, res) {
-	var id = req.query.session;
-	if (!id) return res.send("Please send a session");
-
-	Session.findOneAndUpdate({_id: id, active: true}, {$push: {'campers': req.body}}, function(err, data) {
-		if (err) throw err;
-		renderChugPage(true, req, res)
-	});
-});
-
-//Rosh Sports Side
-app.get("/chugim/klugie", function(req, res) {
-	Session.find({}, function(err, sessions) {
-		if (err) throw err;
-		var sessionID = req.query.session;
-
-		if (!sessionID) return res.render('rosh-sports-select', {sessions: sessions});
-
-		Session.findById(sessionID, function(err, session) {
-			if (err) throw err;
-			if (!session) return res.render('rosh-sports-select', {sessions: sessions});
-
-			res.expose(session, "session");
-			res.expose(utils.getChugim(session), "chugim");
-			res.expose(sessionID, "sessionID");
-			res.expose(session, "session");
-			res.render('rosh-sports-main', {
-				sessionID: sessionID,
-				prefs: _.sortBy(session.campers, function(elt) {
-					return lowerEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]
-				}),
-				session: session,
-				eidot: upperEidot,
-				counter: [1, 2, 3],
-				areCampers: !(_.isEmpty(session.campers))
-			});
-		});
-
-	});
-	
-});
-
-app.post("/chugim/klugie", function(req, res) {
-	var id = req.query.session;
-	if (!id) return res.send("Please send a session");
-
-	Session.findById(id, function(err, session) {
-		if (err) throw err;
-		if (!session) return res.send("Please send a valid session id");
-
-		atomic('chug-key', function(done, key) {
-			Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: {
-				'campers.$.eidah': req.body.eidah,
-				'campers.$.gender': req.body.gender,
-				'campers.$.bunk': req.body.bunk,
-				'campers.$.prefs': req.body.prefs}}, function(err, data) {
-				if (err) throw err;
-
-				res.redirect(`/chugim/klugie?session=${session.id}`)
-
-				done();
-			});
-		});
-	});
-	
-})
-
-app.delete("/chugim/klugie", function(req, res) {
-	var session = req.query.session;
-	if (!session) return res.send("Please send a session");
-	Session.findByIdAndUpdate(session, {$pull:{campers:{name:req.query.camper}}}, function(err, data) {
-		if (!data) return res.send("please send a valid id");
-		res.send("Success");
-	});
-});
 
 //Session creation and deletion
-app.delete("/chugim/klugie/newsession", function(req, res) {
-	var session = req.query.session;
-	if (!session) return res.send("Please send a session");
+app.delete("/chugim/klugie/:id/delete", function(req, res) {
+	var session = req.params.id;
+
 	Session.findByIdAndDelete(session, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a valid session id");
@@ -168,44 +67,40 @@ app.delete("/chugim/klugie/newsession", function(req, res) {
 });
 
 app.get("/chugim/klugie/newsession", function(req, res) {
-	var eidot = ["Aleph", "Vav", "Bet", "Gimmel", "Daled"]
-	var sessionIDs;
-
 	Session.find({}, function(err, data) {
 		if (err) throw err;
-
-		sessionIDs = _.pluck(data, '_id')
 	
-		var id = req.query.session;
-		// If no ID passed in.
-		res.expose(sessionIDs, "sessionIDs");
-		if (!id) return res.render('rosh-sports-new', {
-			eidot: eidot
+		res.expose(_.pluck(data, '_id'), "sessionIDs");
+		res.render('rosh-sports-new', {
+			eidot: upperEidot
 		});
+	});
+});
 
-		Session.findById(id, function(err, session) {
+app.get("/chugim/klugie/:id/editsession", function(req, res) {
+	Session.find({}, function(err, data) {
+		if (err) throw err;
+		Session.findById(req.params.id, function(err, session) {
 			if (err) throw err;
-			if (!session) return res.render('rosh-sports-new', {
-				eidot: eidot
-			});
+			if (!session) return res.redirect('/chugim/klugie/newsession');
 
+			res.expose(_.pluck(data, '_id'), "sessionIDs")
 			res.expose(true, "editing");
 			res.expose(session, "session");
-			res.expose(eidot, "eidot");
+			res.expose(upperEidot, "eidot");
 			res.expose(session.klugim, "chugim");
 			res.render('rosh-sports-new', {
-				eidot: eidot
+				eidot: upperEidot
 			});
 		});
 	});
 });
 
-app.post("/chugim/klugie/newsession", function(req, res) {
+app.post("/chugim/klugie/newsession", async function(req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
 
 	var editing = req.body.editing
 
-	
 	// Session file writing
 	var newSesh = {
 		_id: id,
@@ -249,7 +144,6 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 	capacity = _.flatten([req.body.capacity])
 	popularity = _.flatten([req.body.popularity])
 
-
 	var klugim_info = []
 	for (i in name) {
 		klugim_info.push({
@@ -263,49 +157,146 @@ app.post("/chugim/klugie/newsession", function(req, res) {
 	newSesh.klugim = klugim_info
 
 	if (editing && editing !== id) {
-		atomic('chug-key', function(done, key) {
-			Session.findByIdAndRemove(editing, function(err, data) {
-				if (err) throw err;
-				newSesh.campers = data.campers;
-				newSesh.active = data.active;
-				addSesh = new Session(newSesh);
-				addSesh.save();
-			})
-			done();
+		await Session.findByIdAndRemove(editing, function(err, data) {
+			if (err) throw err;
+			newSesh.campers = data.campers;
+			newSesh.active = data.active;
+			addSesh = new Session(newSesh);
+			addSesh.save();
 		})
 	} else if (editing) {
-		Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
+		await Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
 	} else {
 		newSesh.active = false;
 		var addSesh = new Session(newSesh)
 		addSesh.save(utils.callbackErr)
 	}
 
-	res.redirect("/chugim/klugie?session=" + id);
+	res.redirect("/chugim/klugie/" + id);
 })
 
-app.post("/chugim/klugie/activate", function(req, res){
-	var id = req.query.session;
-	if (!id) return res.send("please send a session id");
-
+app.post("/chugim/klugie/:id/activate", function(req, res){
+	var id = req.params.id;
 	Session.findById(id, function(err, session) {
 		if (err) throw err;
 
-		if (!session) return res.send("please send a valid session id");
-
 		Session.findByIdAndUpdate(id, {active: !session.active}, function(err, data) {
 			if (err) throw err;
+			if (!data) return res.send("Please send a valid session ID");
 
 			res.send("Success")
+		});
+	})
+	
+});
+
+//Rosh Sports Side
+app.get("/chugim/klugie", function(req, res) {
+	Session.find({}, function(err, sessions) {
+		if (err) throw err;
+		
+		res.render('rosh-sports-select', {sessions: sessions});
+	});
+});
+
+app.get("/chugim/klugie/:id", function(req, res) {
+	var sessionID = req.params.id;
+
+	Session.findById(sessionID, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.redirect('/chugim/klugie');
+
+		res.expose(session, "session");
+		res.expose(utils.getChugim(session), "chugim");
+		res.expose(sessionID, "sessionID");
+		res.expose(session, "session");
+		res.render('rosh-sports-main', {
+			sessionID: sessionID,
+			prefs: _.sortBy(session.campers, function(elt) {
+				return lowerEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]
+			}),
+			session: session,
+			eidot: upperEidot,
+			counter: [1, 2, 3],
+			areCampers: !(_.isEmpty(session.campers))
 		});
 	});
 });
 
+app.post("/chugim/klugie/:id", function(req, res) {
+	var id = req.params.id;
+
+	Session.findById(id, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.send("Please send a valid session id");
+
+		Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: {
+			'campers.$.eidah': req.body.eidah,
+			'campers.$.gender': req.body.gender,
+			'campers.$.bunk': req.body.bunk,
+			'campers.$.prefs': req.body.prefs}}, function(err, data) {
+			if (err) throw err;
+
+			res.redirect(`/chugim/klugie/${session.id}`);
+
+		});
+	});
+	
+})
+
+app.delete("/chugim/klugie/:id", function(req, res) {
+	var session = req.params.id;
+	Session.findByIdAndUpdate(session, {$pull:{campers:{name:req.query.camper}}}, function(err, data) {
+		if (!data) return res.send("please send a valid id");
+		res.send("Success");
+	});
+});
+
+
+// Regular Chug form
+function renderChugPage(repeat, req, res) {
+	Session.findOne({_id: req.params.id, active: true}, function(err, session) {
+		if (!session) return res.redirect('/chugim');
+
+		res.expose(session.bunks, "bunks");
+		res.expose(utils.getChugim(session), "chugim");
+		res.expose(session, "session");
+		res.render('chug-form', {
+			eidot: upperEidot,
+			counter: [1, 2, 3],
+			session: session,
+			repeat: repeat,
+			name: req.body.name
+		});
+	});
+}
+
+app.get("/chugim", function(req, res) {
+	Session.find({active: true}, function(err, sessions) {
+		if (err) throw err;
+
+		res.render('chug-select', {sessions: sessions})
+	});
+});
+
+app.get("/chugim/:id", function(req, res) {
+	renderChugPage(false, req, res);
+});
+
+app.post("/chugim/:id", function(req, res) {
+	Session.findOneAndUpdate({_id: req.params.id, active: true}, {$push: {'campers': req.body}}, function(err, data) {
+		if (err) throw err;
+
+		renderChugPage(true, req, res)
+	});
+});
+
+
 // API
 
-app.get('/api/chugim/campers', function(req, res) {
-	var id = req.query.session;
-	if (!id) return res.send("Please send an id");
+app.get('/api/chugim/:id/campers', function(req, res) {
+	var id = req.params.id;
+
 	Session.findById(id, function(err, session) {
 		if (err) throw err;
 

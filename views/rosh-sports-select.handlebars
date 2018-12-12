@@ -14,3 +14,11 @@
 	</form>
 
 </div>
+
+
+<script>
+	$("form").submit(function(event) {
+		window.location.replace(`/chugim/klugie/${$("select").val()}`);
+		event.preventDefault();
+	});
+</script>

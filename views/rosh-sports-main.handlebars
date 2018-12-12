@@ -19,14 +19,14 @@
 		<div class="dropdown-menu dropdown-menu-right">
 			{{#if session.active}}
 			<button id="activate" class="dropdown-item">Deactivate</button>
-			<a href="/chugim?session={{sessionID}}" class="dropdown-item">Enter Camper Data</a>
+			<a href="/chugim/{{sessionID}}" class="dropdown-item">Enter Camper Data</a>
 			{{else}}
 			<button id="activate" class="dropdown-item">Activate</button>
 			<a id="enter-campers-invalid" class="dropdown-item">Enter Camper Data</a>
 			{{/if}}
 			<button id="produceList" class="dropdown-item">Produce Chug List</button>
 			<a href="/chugim/klugie" class="dropdown-item">Select Another Session</a>
-			<a href="/chugim/klugie/newsession?session={{session.id}}" class="dropdown-item">Edit Session</a>
+			<a href="/chugim/klugie/{{session.id}}/editsession" class="dropdown-item">Edit Session</a>
 			<button data-toggle="modal" data-target="#deleteWarning" class="dropdown-item">Delete Session</button>
 		</div>
 	</div>
@@ -119,7 +119,7 @@
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
-			<form method="POST" action="/chugim/klugie?session={{session.id}}">
+			<form method="POST" action="/chugim/klugie/{{session.id}}">
 				<div class="modal-body">
 					<div class="form-row">
 						<div class="form-group col-md-4">
@@ -222,17 +222,17 @@
 
 	$("#delete").on('click', function() {
 		$.ajax({
-			url: `/chugim/klugie?session=${ctxt.sessionID}&camper=${$("#name").val().replace(/ /, '+')}`,
+			url: `/chugim/klugie/${ctxt.sessionID}?camper=${$("#name").val().replace(/ /, '+')}`,
 			type: 'DELETE',
 			success: function(result) {
-				if (result === "Success") {window.location.replace(`/chugim/klugie?session=${ctxt.sessionID}`);}
+				if (result === "Success") {window.location.replace(`/chugim/klugie/${ctxt.sessionID}`);}
 			}
 		})
 	});
 
 	$("#delete-session").on('click', function() {
 		$.ajax({
-			url: `/chugim/klugie/newsession?session=${ctxt.sessionID}`,
+			url: `/chugim/klugie/${ctxt.sessionID}/delete`,
 			type: 'DELETE',
 			success: function(result) {
 				if (result === "Success") {window.location.replace(`/chugim/klugie`);}
@@ -267,7 +267,7 @@
 
 	//Activation
 	$("#activate").on('click', function() {
-		$.post(`/chugim/klugie/activate?session=${ctxt.session._id}`, function(data) {
+		$.post(`/chugim/klugie/${ctxt.session._id}/activate`, function(data) {
 			if (data === "Success") window.location.reload()
 		})
 	});

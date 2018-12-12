@@ -8,7 +8,7 @@
 </div>
 {{/if}}
 <label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, <b><i>DO NOT</i></b> fill out this form again. Please see the rosh sports to make changes.</label>
-<form method="POST" action="/chugim?session={{session._id}}" id="chug-form">
+<form method="POST" action="/chugim/{{session._id}}" id="chug-form">
 	<div class="form-group">
 		<label for="name">Name</label>
 		<input type="text" class="form-control" placeholder="Name" name="name" id="name" required>
@@ -81,7 +81,7 @@
 	function camperExists(name) {
 		var ret = false;
 		$.ajax({
-			url: "/api/chugim/campers?session=" + ctxt.session._id,
+			url:`/api/chugim/${ctxt.session._id}/campers`,
 			success: function(data) {
 				for (var camper of data) {
 					if (camper.name.toLowerCase().match(new RegExp(name.toLowerCase())) || name.toLowerCase().match(new RegExp (camper.name.toLowerCase()))) ret = true;

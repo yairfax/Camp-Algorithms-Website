@@ -6,7 +6,7 @@
 	<h3>Please select a session</h3>
 	<form>
 		<div class="form-group">
-			<select class="custom-select" name="session">
+			<select class="custom-select" name="session" id="select">
 			{{#each sessions}}
 			<option value="{{this.id}}">{{this.name}}</option>
 			{{/each}}
@@ -15,3 +15,10 @@
 		<button type="submit" class="btn btn-primary">Select</button>
 	</form>
 </div>
+
+<script>
+	$("form").submit(function(event) {
+		window.location.replace(`/chugim/${$("#select").val()}`);
+		event.preventDefault();
+	});
+</script>
