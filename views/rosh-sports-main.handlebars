@@ -33,15 +33,15 @@
 </div>
 
 <h1>{{session.name}}</h1>
-<p>Camper Preferences
-	<span style="float:right;">{{length prefs}} Campers Entered</span>
+<p>
+	<input type="text" placeholder="Filter Camper Names" id="name-field">
+	<span style="float: right">{{length prefs}} Campers Entered</span>
 </p>
 {{#if session.active}}
 <p style="text-align: center; color: #049309; font-size: 16pt"><b>Session Active</b></p>
 {{else}}
 <p style="text-align: center; color: #ba1209; font-size: 16pt">Session Inactive</p>
 {{/if}}
-</p>
 
 <ul class="nav nav-tabs justify-content-center" role="tablist">
 	<li class="nav-item">
@@ -68,7 +68,7 @@
 				</tr>
 			</thead>
 			{{#each prefs}}
-			<tr class="trow camper-row" data-toggle="modal" data-target="#camperModal">
+			<tr class="trow camper-row" data-toggle="modal" data-target="#camperModal" id="{{this.name}}">
 				<td>{{this.name}}</td>
 				<td>{{titleCase this.eidah}}</td>
 				<td>{{titleCase this.gender}}</td>
@@ -79,6 +79,7 @@
 			</tr>
 			{{/each}}
 		</table>
+		<h3 id="no-camper" style="text-align: center">"<t id="camper-in"></t>" not found.</h3>
 		{{else}}
 		<h3 style="text-align: center; padding: 20px">No Campers Entered Yet</h3>
 		{{/if}}
@@ -183,6 +184,7 @@
 </div>
 
 <script>
+	// Function to populate modal with bunk and chug data.
 	//Make sure to pass in lower case eidah
 	function bunksAndChugim(eidah) {
 		$("#bunk").empty();
@@ -200,7 +202,7 @@
 		}
 	}
 
-	// Use modal presentation event
+	// Use modal presentation event to populate modal with data
 	$("#camperModal").on("show.bs.modal", function(event) {
 		var row = $(event.relatedTarget)
 		data = row.find('td')
@@ -216,10 +218,12 @@
 		}
 	});
 
+	// In camper modal, reset bunks and chugim if eidah changes
 	$("#eidah").on("change", function() {
 		bunksAndChugim($(this).val())
 	});
 
+	// delete request for camper
 	$("#delete").on('click', function() {
 		$.ajax({
 			url: `/chugim/klugie/${ctxt.sessionID}?camper=${$("#name").val().replace(/ /, '+')}`,
@@ -230,6 +234,7 @@
 		})
 	});
 
+	// delete request for delete session
 	$("#delete-session").on('click', function() {
 		$.ajax({
 			url: `/chugim/klugie/${ctxt.sessionID}/delete`,
@@ -249,7 +254,7 @@
 			$(this).removeClass('bluemouse') }
 	});
 
-	// Check for inconsistencies
+	// Check for inconsistencies in camper entries
 	for (var row of $(".camper-row")) {
 		var eidah = $(row).find('td')[1].innerText.toLowerCase();
 		for (var chug of $(row).find('td').slice(4)) {
@@ -259,6 +264,7 @@
 		}
 	}
 
+	// If any campers have invalid info, don't produce chug list
 	if($(".camper-row.yellowmouse").length) {
 		$("#produceList").on('click', function() {
 			alert(`There are ${$(".trow.yellowmouse").length} campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
@@ -272,7 +278,25 @@
 		})
 	});
 
+	// Alert message for activation if try to enter camper data
 	$("#enter-campers-invalid").on('click', function() {
 		alert("Please activate session to enter camper data.")
+	});
+
+	// Search field
+	$("#no-camper").hide()
+	$("#name-field").keyup(function() {
+		$("#no-camper").hide()
+		if ($(this).val() == "") {
+			$(".camper-row").show()
+		} else {
+			$(".camper-row").hide()
+			$(`.camper-row[id*='${$(this).val()}' i]`).show()
+			if($(".camper-row:visible").length == 0) {
+				$("#no-camper").show()
+				$("#camper-in").text($(this).val())
+			}
+
+		}
 	});
 </script>
