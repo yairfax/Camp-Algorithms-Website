@@ -252,6 +252,10 @@ app.delete("/chugim/klugie/:id", function(req, res) {
 	});
 });
 
+app.get("/chugim/klugie/:id/getlist", function(req, res) {
+	res.download('./public/test.png')
+})
+
 
 // Regular Chug form
 function renderChugPage(repeat, req, res) {
@@ -290,7 +294,6 @@ app.post("/chugim/:id", function(req, res) {
 		renderChugPage(true, req, res)
 	});
 });
-
 
 // API
 

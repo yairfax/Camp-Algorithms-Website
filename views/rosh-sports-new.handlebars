@@ -2,6 +2,7 @@
 <h1>Enter Session Information</h1>
 <p><b>NOTE:</b> To edit an existing session, navigate to Edit Session from that session's page.</p>
 <form id="new-sesh-form" method="POST" action="/chugim/klugie/newsession">
+	<!--Year and session-->
 	<div class="form-row">
 		<div class="form-group col-md-3">
 			<label for="year">Year</label>
@@ -18,6 +19,8 @@
 			</div>
 		</div>
 	</div>
+
+	<!--Bunk entering area-->
 	<h2>Bunks</h2>
 	<div class="form-row">
 		{{#each eidot}}
@@ -38,6 +41,8 @@
 		</div>
 		{{/each}}
 	</div>
+
+	<!--Chug entering field-->
 	<h2>Chugim</h2>
 	<p>Please enter the chug name, its popularity as a number between 0 and 1, its capacity, and which eidot its open to.</p>
 	<div id="chug-container"></div>
@@ -53,6 +58,8 @@
 <script>
 	var chugNum = 0;
 	var rules = {};
+
+	// creates new chug div
 	function getNewChug() {
 		var chugAdd = $("<div>")
 		var temp = `<div class="form-row">
@@ -83,6 +90,7 @@
 		return chugAdd;
 	}
 	
+	// Adds chug to chug container
 	function addChug(newChug) {
 		$("#chug-container").append(newChug);
 		$(".delete-chug").on("click", function(event) {
@@ -91,6 +99,7 @@
 		});
 	}
 
+	// Creates new chug and appends
 	$("#add-chug").on('click', function() {
 		addChug(getNewChug());
 	});
@@ -124,6 +133,7 @@
 
 	$("#new-sesh-form").on("submit", function(event) {
 		var id = ($("#year").val() - 2000) + $(".session:checked").val()
+		// If session already exists and is not editing session
 		if (ctxt.sessionIDs.includes(id) && id !== $("#edit").val()) {
 			$("#year").addClass('is-invalid')
 			$("#year").focus();
@@ -134,14 +144,16 @@
 			return false;
 		}
 
+		// Check if any chugim have been added
 		if($("#chug-container").is(":empty")) {
 			alert("Please add chugim")
 			return false;
 		}
 
+		// If chug exists but no eidot have been checked
 		for (var i = 0; i < chugNum; i++) {
 			if ($(`.eidot${i}`).length && !$(`.eidot${i}:checked`).length) {
-				event.preventDefault();
+				
 				var cont = $(`.eidot${i}`).parent().parent().parent().parent().find("#name")
 				cont.addClass('is-invalid')
 				cont.focus();
@@ -149,6 +161,7 @@
 				$(`.eidot${i}`).on('click', function() {
 					cont.removeClass('is-invalid')
 				})
+				return false;
 			}
 		}
 

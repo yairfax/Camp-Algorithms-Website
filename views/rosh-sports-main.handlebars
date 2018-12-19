@@ -11,6 +11,7 @@
 
 </style>
 
+<!--Dropdown menu-->
 <div class="top-right">
 	<div class="btn-group">
 		<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -24,7 +25,7 @@
 			<button id="activate" class="dropdown-item">Activate</button>
 			<a id="enter-campers-invalid" class="dropdown-item">Enter Camper Data</a>
 			{{/if}}
-			<button id="produceList" class="dropdown-item">Produce Chug List</button>
+			<a href="http://www.google.com" id="produceList" class="dropdown-item">Produce Chug List</button>
 			<a href="/chugim/klugie" class="dropdown-item">Select Another Session</a>
 			<a href="/chugim/klugie/{{session.id}}/editsession" class="dropdown-item">Edit Session</a>
 			<button data-toggle="modal" data-target="#deleteWarning" class="dropdown-item">Delete Session</button>
@@ -32,17 +33,20 @@
 	</div>
 </div>
 
+
+
+<!--Header, including name, textbox, and session active-->
 <h1>{{session.name}}</h1>
-<p>
-	<input type="text" placeholder="Filter Camper Names" id="name-field">
-	<span style="float: right">{{length prefs}} Campers Entered</span>
-</p>
+
+<span>{{length prefs}} Campers Entered</span>
+
 {{#if session.active}}
 <p style="text-align: center; color: #049309; font-size: 16pt"><b>Session Active</b></p>
 {{else}}
 <p style="text-align: center; color: #ba1209; font-size: 16pt">Session Inactive</p>
 {{/if}}
 
+<!--Navbar-->
 <ul class="nav nav-tabs justify-content-center" role="tablist">
 	<li class="nav-item">
 		<a class="nav-link active" id="camper-tab" data-toggle="tab" href="#campers-view" role="tab" aria-controls="camper-view" aria-selected="true">Campers</a>
@@ -53,13 +57,14 @@
 </ul>
 
 <div class="tab-content">
+	<!--Campers tab-->
 	<div class="tab-pane fade show active" id="campers-view" role="tabpanel" aria-labelledby="camper-tab">
 		{{#if areCampers}}
 		<table class="table">
 			<thead>
 				<tr>
-					<th>Name</th>
-					<th>Eidah</th>
+					<th data-container="body" data-toggle="popover-name" data-placement="bottom" title="Filter Names">Name</th>
+					<th data-container="body" data-toggle="popover-eidah" data-placement="bottom" title="Filter by Eidah">Eidah</th>
 					<th>Gender</th>
 					<th>Bunk</th>
 					<th>Choice 1</th>
@@ -68,7 +73,7 @@
 				</tr>
 			</thead>
 			{{#each prefs}}
-			<tr class="trow camper-row" data-toggle="modal" data-target="#camperModal" id="{{this.name}}">
+			<tr class="trow camper-row {{this.eidah}}" data-toggle="modal" data-target="#camperModal" id="{{this.name}}">
 				<td>{{this.name}}</td>
 				<td>{{titleCase this.eidah}}</td>
 				<td>{{titleCase this.gender}}</td>
@@ -84,6 +89,8 @@
 		<h3 style="text-align: center; padding: 20px">No Campers Entered Yet</h3>
 		{{/if}}
 	</div>
+
+	<!--Chug tab-->
 	<div class="tab-pane fade" id="chug-view" role="tabpanel" aria-labelledby="chug-tab">
 		<table class="table">
 			<thead>
@@ -183,6 +190,24 @@
 	</div>
 </div>
 
+<!-- Popovers -->
+<div class="popover hide fade bs-popover-bottom" role="tooltip" id="popover354107" style="position: absolute; transform: translate3d(247px, 196px, 0px); top: 0px; left: 0px; will-change: transform;" x-placement="bottom"><div class="arrow" style="left: 34px;"></div><h3 class="popover-header"></h3><div class="popover-body"><div id="eidah-filter">
+	<form id="eidah-filter-form">
+		<div class="form-group">
+			{{#each eidot}}
+			<div class="form-check">
+				<input class="form-check-input eidah" type='checkbox' name="eidah" value="{{toLowerCase this}}">
+				<label class="form-check-label" for="{{toLowerCase this}}">{{this}}</label>
+			</div>
+			{{/each}}
+		</div>
+	</form>
+</div></div></div>
+
+<div class="popover hide fade bs-popover-bottom hide" role="tooltip" id="popover354107" style="position: absolute; transform: translate3d(247px, 196px, 0px); top: 0px; left: 0px; will-change: transform;" x-placement="bottom"><div class="arrow" style="left: 34px;"></div><h3 class="popover-header"></h3><div class="popover-body"><div id="eidah-filter">
+	<input class="form-control" type="text" placeholder="Filter Camper Names" id="name-field">
+</div></div></div>
+
 <script>
 	// Function to populate modal with bunk and chug data.
 	//Make sure to pass in lower case eidah
@@ -266,8 +291,19 @@
 
 	// If any campers have invalid info, don't produce chug list
 	if($(".camper-row.yellowmouse").length) {
-		$("#produceList").on('click', function() {
+		$("#produceList").prop('href', '#');
+		$("#produceList").on('click', function(event) {
 			alert(`There are ${$(".trow.yellowmouse").length} campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
+			event.preventDefault();
+		})
+	}
+
+	// Prevent list production on active session
+	if (ctxt.session.active) {
+		$("#produceList").prop('href', '#');
+		$("#produceList").on('click', function(event) {
+			alert("Cannot produce chug list while session is active.");
+			event.preventDefault();
 		})
 	}
 
@@ -292,11 +328,55 @@
 		} else {
 			$(".camper-row").hide()
 			$(`.camper-row[id*='${$(this).val()}' i]`).show()
-			if($(".camper-row:visible").length == 0) {
+			if(!$(".camper-row:visible").length) {
 				$("#no-camper").show()
 				$("#camper-in").text($(this).val())
 			}
 
 		}
 	});
+
+	// Set up popovers
+	$('[data-toggle="popover-eidah"]').popover({
+		html: true,
+		content: $("#eidah-filter")
+  	});
+
+  	$('[data-toggle="popover-name"]').popover({
+		html: true,
+		content: $("#name-field")
+  	});
+
+  	// Eidah filtering
+  	$("#eidah-filter-form").on('change', function() {
+  		var ceidot = $(this).serializeArray();
+  		
+  		if (ceidot.length) {
+  			$(".camper-row").hide();
+  			for (var eidah of ceidot) {
+  				$(`.${eidah.value}`).show();
+  			}
+  		} else {
+  			$(".camper-row").show();
+  		}
+  	});
+
+  	// Enable Tooltip
+  	$('[data-toggle*="popover"]').tooltip({
+  		placement: 'top'
+  	});
+
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
