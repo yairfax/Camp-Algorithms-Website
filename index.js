@@ -7,13 +7,18 @@ var handlebars = exphbs.handlebars;
 var app = express();
 var PORT = 3000;
 var utils = require('./utils.js');
-var atomic = require('atomic')();
 var execFile = require('child_process');
 var dotenv = require('dotenv');
 var mongoose = require('mongoose');
 var Session = require('./models/Session.js');
 var expstate = require('express-state');
-
+var passport = require('passport');
+var Strategy = require('passport-local').Strategy;
+var ensureLogin = require('connect-ensure-login');
+var expsession = require('express-session');
+var saltRounds = 10;
+var bcrypt = require('bcrypt');
+var User = require('./models/User.js')
 
 //MongoDB
 dotenv.load()
@@ -39,12 +44,40 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/public', express.static('public'));
+app.use(expsession({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
 const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
 const upperEidot = _.map(lowerEidot, utils.titleCase)
 
 // Set up express-state
 expstate.extend(app);
 app.set("state namespace", 'ctxt'); 
+
+// Set up passport
+passport.use(new Strategy(function(username, password, cb) {
+	User.findOne({username: username}, function(err, user) {
+		if (err) return cb(err);
+		if (!user) return cb(null, false);
+		bcrypt.compare(password, user.pswd, function(err, res) {
+			if (err) return cb(err);
+			if (!res) return cb(null, false);
+			else return cb(null, user);
+		})
+	})
+}));
+
+passport.serializeUser(function(user, cb) {
+	cb(null, user._id);
+});
+
+passport.deserializeUser(function(id, cb) {
+	User.findById(id, function(err, user) {
+		if (err) return cb(err);
+		cb(null, user);
+	})
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 //Server
 
@@ -54,9 +87,22 @@ app.get("/", function(req, res) {
 	res.render('home');
 });
 
+// Login
+app.get('/login', function(req, res) {
+	if (req.user) {
+		return res.redirect('/')
+	}
+	res.render('login', {
+		fail: req.query.fail === 'true'
+	})
+})
+
+app.post('/login', passport.authenticate('local', {failureRedirect: '/login?fail=true'}), function(req, res) {
+	res.redirect('/chugim/klugie')
+})
 
 //Session creation and deletion
-app.delete("/chugim/klugie/:id/delete", function(req, res) {
+app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
 
 	Session.findByIdAndDelete(session, function(err, session) {
@@ -66,7 +112,7 @@ app.delete("/chugim/klugie/:id/delete", function(req, res) {
 	});
 });
 
-app.get("/chugim/klugie/newsession", function(req, res) {
+app.get("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.find({}, function(err, data) {
 		if (err) throw err;
 	
@@ -77,7 +123,7 @@ app.get("/chugim/klugie/newsession", function(req, res) {
 	});
 });
 
-app.get("/chugim/klugie/:id/editsession", function(req, res) {
+app.get("/chugim/klugie/:id/editsession", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.find({}, function(err, data) {
 		if (err) throw err;
 		Session.findById(req.params.id, function(err, session) {
@@ -96,7 +142,7 @@ app.get("/chugim/klugie/:id/editsession", function(req, res) {
 	});
 });
 
-app.post("/chugim/klugie/newsession", async function(req, res) {
+app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async function(req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
 
 	var editing = req.body.editing
@@ -175,7 +221,7 @@ app.post("/chugim/klugie/newsession", async function(req, res) {
 	res.redirect("/chugim/klugie/" + id);
 })
 
-app.post("/chugim/klugie/:id/activate", function(req, res){
+app.post("/chugim/klugie/:id/activate", ensureLogin.ensureLoggedIn(), function(req, res){
 	var id = req.params.id;
 	Session.findById(id, function(err, session) {
 		if (err) throw err;
@@ -191,7 +237,7 @@ app.post("/chugim/klugie/:id/activate", function(req, res){
 });
 
 //Rosh Sports Side
-app.get("/chugim/klugie", function(req, res) {
+app.get("/chugim/klugie", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.find({}, function(err, sessions) {
 		if (err) throw err;
 		
@@ -199,7 +245,7 @@ app.get("/chugim/klugie", function(req, res) {
 	});
 });
 
-app.get("/chugim/klugie/:id", function(req, res) {
+app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var sessionID = req.params.id;
 
 	Session.findById(sessionID, function(err, session) {
@@ -223,7 +269,7 @@ app.get("/chugim/klugie/:id", function(req, res) {
 	});
 });
 
-app.post("/chugim/klugie/:id", function(req, res) {
+app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var id = req.params.id;
 
 	Session.findById(id, function(err, session) {
@@ -244,7 +290,7 @@ app.post("/chugim/klugie/:id", function(req, res) {
 	
 })
 
-app.delete("/chugim/klugie/:id", function(req, res) {
+app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
 	Session.findByIdAndUpdate(session, {$pull:{campers:{name:req.query.camper}}}, function(err, data) {
 		if (!data) return res.send("please send a valid id");
@@ -252,7 +298,11 @@ app.delete("/chugim/klugie/:id", function(req, res) {
 	});
 });
 
-app.get("/chugim/klugie/:id/getlist", function(req, res) {
+/************/
+/* FIX THIS */
+/************/
+
+app.get("/chugim/klugie/:id/getlist", ensureLogin.ensureLoggedIn(), function(req, res) {
 	res.download('./public/test.png')
 })
 
