@@ -101,6 +101,11 @@ app.post('/login', passport.authenticate('local', {failureRedirect: '/login?fail
 	res.redirect('/chugim/klugie')
 })
 
+app.get('/logout', function(req, res) {
+	req.logout();
+	res.redirect('/');
+})
+
 //Session creation and deletion
 app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
@@ -344,6 +349,35 @@ app.post("/chugim/:id", function(req, res) {
 		renderChugPage(true, req, res)
 	});
 });
+
+// Other user registration
+app.get('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
+	User.find({}, function(err, users) {
+		if (err) throw err;
+
+		res.expose(_.pluck(users, 'username'), 'users');
+		res.render('register');
+	})
+	
+})
+
+app.post('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
+	bcrypt.hash(req.body.pswd, saltRounds, function(err, hash) {
+		var newUser = new User({
+			name: req.body.name,
+			username: req.body.username
+			pswd: hash
+		});
+		newUser.save();
+		res.redirect('/chugim/klugie')
+	});
+	
+})
+
+// Change Password
+/**************/
+/*  HERE ******/
+/**************/
 
 // API
 
