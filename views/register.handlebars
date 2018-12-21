@@ -1,0 +1,29 @@
+<h3>Register Another Admin</h3>
+<form id="register-form" method='POST' action='/register'>
+	<div class="form-group">
+		<label for='name'>Name</label>
+		<input type='text' name='name' placeholder="Name" class="form-control" required>
+	</div>
+	<div class="form-group">
+		<label for='username'>Username</label>
+		<input id='username' type='text' name='username' placeholder="Username" class="form-control" required> 
+		<div class="invalid-feedback">Username already exists</div>
+	</div>
+	<div class="form-group">
+		<label for='pswd'>Password</label>
+		<input type='password' name='pswd' placeholder="Password" class="form-control" required> 
+	</div>
+	<button class="btn btn-primary" type="submit">Submit</button>
+</form>
+
+<script>
+	$("#register-form").submit(function(event) {
+		if (ctxt.users.includes($("#username").val())) {
+			$("#username").addClass('is-invalid');
+			$("#username").on('click', function() {
+				$("#username").removeClass('is-invalid');
+			})
+			event.preventDefault()
+		}
+	});
+</script>
