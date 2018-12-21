@@ -7,16 +7,19 @@
 		</button>
 		<div class="dropdown-menu dropdown-menu-right">
 			<a href="/register" class="dropdown-item">Register Another User</a>
-			<a href="/password" class="dropdown-item">Change Password</a>
+			<button data-toggle="modal" data-target="#passwordModal" class="dropdown-item">Change Password</button>
 			<a href="/logout" class="dropdown-item">Logout</a>
 		</div>
 	</div>
 </div>
 
-<h2 style="text-align: center; padding: 20px">Rosh Sports Portal</h2>
+<div class="text-center">
+	<h2 style="padding-top: 20px">Rosh Sports Portal</h2>
+	<h3>Welcome {{user}}</h3>
+</div>
 <div class="centered">
 	<h3>Please select a session</h3>
-	<form>
+	<form id="select">
 		<div class="form-group">
 			<select class="custom-select" name="session">
 			{{#each sessions}}
@@ -30,10 +33,59 @@
 
 </div>
 
+<!-- Change Password Modal -->
+<div class="modal fade" id="passwordModal" >
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="modalTitle">Change Password</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form method="POST" action="/changepassword" id="passform">
+				<div class="modal-body">
+					<div class="form-group">
+						<label for="currPass">Current Password</label>
+						<input type="password" class="form-control" name="currPass" id="currPass" required>
+						<div class="invalid-feedback">Wrong Password!</div>
+					</div>
+					<div class="form-group">
+						<label for="pswd">New Password</label>
+						<input type="password" class="form-control" name="pswd" required>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+					<button type="submit" class="btn btn-primary">Save Changes</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 
 <script>
-	$("form").submit(function(event) {
+	$("#select").submit(function(event) {
 		window.location.replace(`/chugim/klugie/${$("select").val()}`);
 		event.preventDefault();
+	});
+
+	$("#passform").submit(function(event) {
+		var ret = false;
+		$.ajax({
+			url:`/api/ispassword?pswd=${$("#currPass").val()}`,
+			success: function(data) {
+				ret = data;
+			},
+			async: false
+		})
+		if (!ret) {
+			$("#currPass").addClass('is-invalid');
+			$("#currPass").click(function() {
+				$("#currPass").removeClass('is-invalid');
+			})
+			event.preventDefault();
+		}
 	});
 </script>

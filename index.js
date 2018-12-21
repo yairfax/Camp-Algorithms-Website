@@ -103,7 +103,7 @@ app.post('/login', passport.authenticate('local', {failureRedirect: '/login?fail
 
 app.get('/logout', function(req, res) {
 	req.logout();
-	res.redirect('/');
+	res.redirect('/login');
 })
 
 //Session creation and deletion
@@ -246,7 +246,7 @@ app.get("/chugim/klugie", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.find({}, function(err, sessions) {
 		if (err) throw err;
 		
-		res.render('rosh-sports-select', {sessions: sessions});
+		res.render('rosh-sports-select', {sessions: sessions, user: req.user.name});
 	});
 });
 
@@ -365,7 +365,7 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
 	bcrypt.hash(req.body.pswd, saltRounds, function(err, hash) {
 		var newUser = new User({
 			name: req.body.name,
-			username: req.body.username
+			username: req.body.username,
 			pswd: hash
 		});
 		newUser.save();
@@ -375,9 +375,13 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
 })
 
 // Change Password
-/**************/
-/*  HERE ******/
-/**************/
+app.post('/changepassword', ensureLogin.ensureLoggedIn(), function(req, res) {
+	bcrypt.hash(req.body.pswd, saltRounds, function(err, hash) {
+		User.findOneAndUpdate({username: req.user.username}, {pswd: hash}, function(data) {
+			res.redirect('/chugim/klugie')
+		})
+	})
+})
 
 // API
 
@@ -392,6 +396,17 @@ app.get('/api/chugim/:id/campers', function(req, res) {
 	})
 })
 
-app.listen(process.env.PORT || 3000, function() {
+app.get('/api/ispassword', ensureLogin.ensureLoggedIn(), function(req, res) {
+	var pswd = req.query.pswd;
+	if (!pswd) return res.send("Please send a password!");
+
+	bcrypt.compare(pswd, req.user.pswd, function(err, ress) {
+		if (err) throw err;
+
+		res.json(ress)
+	});
+});
+
+app.listen(process.env.PORT || PORT, function() {
     console.log('Listening!');
 });
