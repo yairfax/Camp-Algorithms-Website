@@ -371,17 +371,16 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
 		newUser.save();
 		res.redirect('/chugim/klugie')
 	});
-	
-})
+});
 
 // Change Password
 app.post('/changepassword', ensureLogin.ensureLoggedIn(), function(req, res) {
 	bcrypt.hash(req.body.pswd, saltRounds, function(err, hash) {
 		User.findOneAndUpdate({username: req.user.username}, {pswd: hash}, function(data) {
 			res.redirect('/chugim/klugie')
-		})
-	})
-})
+		});
+	});
+});
 
 // API
 
@@ -393,8 +392,8 @@ app.get('/api/chugim/:id/campers', function(req, res) {
 
 		if (!session) return res.send("please send a valid session id");
 		return res.json(session.campers);
-	})
-})
+	});
+});
 
 app.get('/api/ispassword', ensureLogin.ensureLoggedIn(), function(req, res) {
 	var pswd = req.query.pswd;
