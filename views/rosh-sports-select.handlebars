@@ -52,7 +52,7 @@
 					</div>
 					<div class="form-group">
 						<label for="pswd">New Password</label>
-						<input type="password" class="form-control" name="pswd" required>
+						<input type="password" class="form-control" name="pswd" id="pswd" required>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -72,6 +72,22 @@
 	});
 
 	$("#passform").submit(function(event) {
-		//
+		var ret = false;
+		$.ajax({
+			url:`/api/ispassword?pswd=${$("#currPass").val()}`,
+			success: function(data) {
+				ret = data;
+			},
+			async: false
+		});
+
+		if (!ret) {
+			$("#currPass").addClass('is-invalid');
+			$("#currPass").click(function() {
+				$("#currPass").removeClass('is-invalid');
+			});
+
+			event.preventDefault();
+		}
 	});
 </script>

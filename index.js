@@ -383,7 +383,6 @@ app.post('/changepassword', ensureLogin.ensureLoggedIn(), function(req, res) {
 });
 
 // API
-
 app.get('/api/chugim/:id/campers', function(req, res) {
 	var id = req.params.id;
 
@@ -404,6 +403,12 @@ app.get('/api/ispassword', ensureLogin.ensureLoggedIn(), function(req, res) {
 
 		res.json(ress)
 	});
+});
+
+// Handle 404
+app.use(function(req, res) {
+	res.status(404)
+	res.render('404');
 });
 
 app.listen(process.env.PORT || PORT, function() {
