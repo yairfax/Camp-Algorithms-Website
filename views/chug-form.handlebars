@@ -58,9 +58,9 @@
 
 			// Create bunk list
 			$("#bunk-select").empty();
-			$("#bunk-select").append(`<option value="" selected disabled>Select Bunk</option>`)
+			$("#bunk-select").append(`<option selected disabled>Select Bunk</option>`)
 			for (var bunk of ctxt.bunks[eidah]) {
-				$("#bunk-select").append(`<option value="${bunk.toLowerCase()}">${bunk}</option>`)
+				$("#bunk-select").append(`<option value="${bunk}">${bunk}</option>`)
 			}
 
 			//Populate Chug List
@@ -69,7 +69,7 @@
 					$(row).append(`<option disabled selected>Select Preference</option>`)
 			}
 			for (var chug of ctxt.chugim[eidah]) {
-				$(`.pref`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
+				$(`.pref`).append(`<option value="${chug}">${chug}</option>`)
 			}
 		}
 	});

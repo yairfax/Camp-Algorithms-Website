@@ -3,7 +3,6 @@ var bodyParser = require('body-parser');
 var _ = require("underscore");
 var logger = require('morgan');
 var exphbs = require('express-handlebars');
-var handlebars = exphbs.handlebars;
 var app = express();
 var PORT = 3000;
 var utils = require('./utils.js');
@@ -18,7 +17,8 @@ var ensureLogin = require('connect-ensure-login');
 var expsession = require('express-session');
 var saltRounds = 10;
 var bcrypt = require('bcrypt');
-var User = require('./models/User.js')
+var User = require('./models/User.js');
+var driver = require('./driver');
 
 //MongoDB
 dotenv.load()
@@ -307,8 +307,15 @@ app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res
 /* FIX THIS */
 /************/
 
-app.get("/chugim/klugie/:id/getlist", ensureLogin.ensureLoggedIn(), function(req, res) {
-	res.download('./public/test.png')
+app.get("/chugim/klugie/:id/produceList", ensureLogin.ensureLoggedIn(), function(req, res) {
+	Session.findById(req.params.id, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.send("Please send a session!");
+
+		var outData = driver.getList(session.campers, session.klugim);
+
+		res.send('Success!');
+	})
 })
 
 

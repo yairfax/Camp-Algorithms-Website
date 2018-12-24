@@ -80,6 +80,10 @@ var sessionSchema = new mongoose.Schema({
 	},
 	klugim: [klugSchema],
 	campers: [camperSchema],
+	lastProduction: Date,
+	chugCSV: String,
+	camperCSV: String,
+	prefsReceived: [Number]
 })
 
 var Session = mongoose.model('Session', sessionSchema);

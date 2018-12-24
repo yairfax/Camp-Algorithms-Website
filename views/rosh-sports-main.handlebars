@@ -78,9 +78,9 @@
 				<td>{{this.name}}</td>
 				<td>{{titleCase this.eidah}}</td>
 				<td>{{titleCase this.gender}}</td>
-				<td>{{titleCase this.bunk}}</td>
+				<td>{{this.bunk}}</td>
 				{{#each this.prefs}}
-				<td>{{titleCase this}}</td>
+				<td>{{this}}</td>
 				{{/each}}
 			</tr>
 			{{/each}}
@@ -104,7 +104,7 @@
 			</thead>
 			{{#each session.klugim}}
 			<tr class="trow">
-				<td>{{titleCase this.name}}</td>
+				<td>{{this.name}}</td>
 				<td>{{this.capacity}}</td>
 				<td>{{this.popularity}}</td>
 				<td>
@@ -216,7 +216,7 @@
 		$("#bunk").empty();
 		$("#bunk").append(`<option value="" selected disabled>Select Bunk</option>`)
 		for (var bunk of ctxt.session.bunks[eidah]) {
-			$("#bunk").append(`<option value="${bunk.toLowerCase()}">${bunk}</option>`)
+			$("#bunk").append(`<option value="${bunk}">${bunk}</option>`)
 		}
 
 		//Populate Chug List
@@ -224,7 +224,7 @@
 		$(`.pref`).append(`<option disabled selected>Select Preference</option`)
 
 		for (var chug of ctxt.chugim[eidah]) {
-			$(`.pref`).append(`<option value="${chug.toLowerCase()}">${chug}</option>`)
+			$(`.pref`).append(`<option value="${chug}">${chug}</option>`)
 		}
 	}
 
@@ -237,10 +237,10 @@
 		modal.find('#name').val(data[0].textContent)
 		modal.find('#eidah').val(data[1].textContent.toLowerCase())
 		bunksAndChugim(data[1].textContent.toLowerCase())
-		modal.find('#bunk').val(data[3].textContent.toLowerCase())
+		modal.find('#bunk').val(data[3].textContent)
 		modal.find("#gender").val(data[2].textContent.toLowerCase())
 		for (var i = 0; i <= 2; i++) {
-			$(modal.find(`.pref`)[i]).val(data[i+4].textContent.toLowerCase())
+			$(modal.find(`.pref`)[i]).val(data[i+4].textContent)
 		}
 	});
 
@@ -284,7 +284,7 @@
 	for (var row of $(".camper-row")) {
 		var eidah = $(row).find('td')[1].innerText.toLowerCase();
 		for (var chug of $(row).find('td').slice(4)) {
-			if (!ctxt.chugim[eidah].map(function(str) {return str.toLowerCase()}).includes(chug.innerText.toLowerCase())) {
+			if (!ctxt.chugim[eidah].includes(chug.innerText)) {
 				$(row).addClass('yellowmouse');
 			}
 		}
