@@ -98,7 +98,10 @@
 		return ret
 	}
 
+	var initText = $("#name-feedback").text();
+
 	$("#chug-form").submit(function(event) {
+		$("#name-feedback").text(initText);
 		var arr = []
 		// get preference values to see if they're the same
 		for (var i = 0; i < 3; i++) {
@@ -119,7 +122,6 @@
 
 		// illegal characters
 		if ($("#name").val().match(/[\(\)]/)) {
-			var init = $("name-feedback").text();
 			$("#name-feedback").text(`Invalid character: ${$("#name").val().match(/[\(\)]/)[0]}`);
 
 			$("#name").addClass('is-invalid');
@@ -127,7 +129,7 @@
 
 			$("#name").on('click', function() {
 				$("#name").removeClass('is-invalid');
-				$("name-feedback").text(init);
+				$("#name-feedback").text(initText);
 			})
 			event.preventDefault()
 		}

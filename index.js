@@ -307,7 +307,7 @@ app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res
 /* FIX THIS */
 /************/
 
-app.get("/chugim/klugie/:id/produceList", ensureLogin.ensureLoggedIn(), function(req, res) {
+app.get("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.findById(req.params.id, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a session!");
@@ -350,11 +350,20 @@ app.get("/chugim/:id", function(req, res) {
 });
 
 app.post("/chugim/:id", function(req, res) {
-	Session.findOneAndUpdate({_id: req.params.id, active: true}, {$push: {'campers': req.body}}, function(err, data) {
+	Session.findOne({_id: req.params.id, active: true}, function(err, session) {
 		if (err) throw err;
 
-		renderChugPage(true, req, res)
-	});
+		if (!_.findWhere(session.campers, {name: req.body.name})) {
+			Session.findOneAndUpdate({_id: req.params.id, active: true}, {$push: {'campers': req.body}}, function(err, data) {
+				if (err) throw err;
+
+				renderChugPage(true, req, res)
+			});
+		} else {
+			renderChugPage(false, req, res);
+		}
+	})
+	
 });
 
 // Other user registration
