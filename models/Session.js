@@ -21,7 +21,8 @@ var klugSchema = new mongoose.Schema({
 		min: 0,
 		max: 200,
 		required: true
-	}
+	},
+	kids: [String]
 })
 
 var camperSchema = new mongoose.Schema({
@@ -46,7 +47,9 @@ var camperSchema = new mongoose.Schema({
 	prefs: {
 		type: [String],
 		required: true
-	}
+	},
+	chug: String,
+	pref_recieved: Number
 })
 
 var sessionSchema = new mongoose.Schema({
@@ -81,9 +84,10 @@ var sessionSchema = new mongoose.Schema({
 	klugim: [klugSchema],
 	campers: [camperSchema],
 	lastProduction: Date,
+	tears: [Number],
+	noChug: [String],
 	chugCSV: String,
-	camperCSV: String,
-	prefsReceived: [Number]
+	camperCSV: String
 })
 
 var Session = mongoose.model('Session', sessionSchema);

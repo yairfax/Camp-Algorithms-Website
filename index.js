@@ -260,7 +260,6 @@ app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 		res.expose(session, "session");
 		res.expose(utils.getChugim(session), "chugim");
 		res.expose(sessionID, "sessionID");
-		res.expose(session, "session");
 		res.render('rosh-sports-main', {
 			sessionID: sessionID,
 			prefs: _.sortBy(session.campers, function(elt) {
@@ -307,14 +306,21 @@ app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res
 /* FIX THIS */
 /************/
 
-app.get("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), function(req, res) {
+app.post("/chugim/klugie/:id/producelist", /*ensureLogin.ensureLoggedIn(), */function(req, res) {
 	Session.findById(req.params.id, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a session!");
 
+		// getList updates in place
 		var outData = driver.getList(session.campers, session.klugim);
 
-		res.send('Success!');
+		session.noChug = outData.noChug;
+		session.tears = outData.tears;
+		session.lastProduction = new Date();
+
+		Session.findByIdAndUpdate(req.params.id, session, function(err, session) {
+			res.send('Success');
+		})
 	})
 })
 
@@ -350,10 +356,10 @@ app.get("/chugim/:id", function(req, res) {
 });
 
 app.post("/chugim/:id", function(req, res) {
-	Session.findOne({_id: req.params.id, active: true}, function(err, session) {
+	Session.findOne({_id: req.params.id, active: true, 'campers.name': req.body.name}, function(err, session) {
 		if (err) throw err;
 
-		if (!_.findWhere(session.campers, {name: req.body.name})) {
+		if (!session) {
 			Session.findOneAndUpdate({_id: req.params.id, active: true}, {$push: {'campers': req.body}}, function(err, data) {
 				if (err) throw err;
 
