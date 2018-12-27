@@ -6,7 +6,6 @@ var exphbs = require('express-handlebars');
 var app = express();
 var PORT = 3000;
 var utils = require('./utils.js');
-var execFile = require('child_process');
 var dotenv = require('dotenv');
 var mongoose = require('mongoose');
 var Session = require('./models/Session.js');
@@ -19,12 +18,14 @@ var saltRounds = 10;
 var bcrypt = require('bcrypt');
 var User = require('./models/User.js');
 var driver = require('./driver');
+var createCSVStringifier = require('csv-writer').createObjectCsvStringifier;
+var createArrayCSVStringifier = require('csv-writer').createArrayCsvStringifier;
 
 //MongoDB
 dotenv.load()
 mongoose.connect(process.env.MONGODB, { useNewUrlParser: true })
 mongoose.connection.on('error', function(err) {
-	console.log("Connection was unable to take place")
+	console.log("Connection to database was unable to take place")
 	process.exit(1);
 });
 
@@ -276,21 +277,19 @@ app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var id = req.params.id;
 
-	Session.findById(id, function(err, session) {
+	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: {
+		'campers.$.eidah': req.body.eidah,
+		'campers.$.gender': req.body.gender,
+		'campers.$.bunk': req.body.bunk,
+		'campers.$.prefs': req.body.prefs}}, function(err, data) {
 		if (err) throw err;
-		if (!session) return res.send("Please send a valid session id");
 
-		Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: {
-			'campers.$.eidah': req.body.eidah,
-			'campers.$.gender': req.body.gender,
-			'campers.$.bunk': req.body.bunk,
-			'campers.$.prefs': req.body.prefs}}, function(err, data) {
-			if (err) throw err;
+		if (!data) return res.send("Please send valid session ID");
 
-			res.redirect(`/chugim/klugie/${session.id}`);
+		res.redirect(`/chugim/klugie/${id}`);
 
-		});
 	});
+
 	
 })
 
@@ -302,11 +301,8 @@ app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res
 	});
 });
 
-/************/
-/* FIX THIS */
-/************/
-
-app.post("/chugim/klugie/:id/producelist", /*ensureLogin.ensureLoggedIn(), */function(req, res) {
+// Chug list production
+app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.findById(req.params.id, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a session!");
@@ -318,12 +314,74 @@ app.post("/chugim/klugie/:id/producelist", /*ensureLogin.ensureLoggedIn(), */fun
 		session.tears = outData.tears;
 		session.lastProduction = new Date();
 
+		/****************/
+		/* Produce CSVs */
+		/****************/
+
+		// Camper CSV
+
+		var tempCampers = _.sortBy(_.map(session.campers, function(kid) {
+			return {name: kid.name, eidah: utils.titleCase(kid.eidah), gender: utils.titleCase(kid.gender),
+				bunk: kid.bunk, pref1: kid.prefs[0], pref2: kid.prefs[1], pref3: kid.prefs[2],
+				pref_recieved: kid.pref_recieved, chug: kid.chug};
+		}), function(elt) {
+			return upperEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]; 
+		});
+
+		var camperCSV = createCSVStringifier({
+		    header: [
+		        {id: 'name', title: 'Name'},
+		        {id: 'eidah', title: 'Eidah'},
+		        {id: 'gender', title: 'Gender'},
+		        {id: 'bunk', title: 'Bunk'},
+		        {id: 'pref1', title: 'First Preference'},
+		        {id: 'pref2', title: 'Second Preference'},
+		        {id: 'pref3', title: 'Third Preference'},
+		        {id: 'pref_recieved', title: 'Preference Recieved'},
+		        {id: 'chug', title: 'Chug'}
+		    ]
+		});
+
+		session.camperCSV = camperCSV.getHeaderString() + camperCSV.stringifyRecords(tempCampers);
+
+		// Chugim CSV
+
+		var tempChugim = _.map(outData.chugim, function(val, key) {
+			var kids = _.map(val, (kid) => {return kid.name})
+			return [key].concat(kids)
+		})
+		tempChugim.push(['No Chug'].concat(_.pluck(outData.noChug, 'name')))
+
+		var chugCSV = createArrayCSVStringifier({});
+		session.chugCSV = chugCSV.stringifyRecords(tempChugim);
+
 		Session.findByIdAndUpdate(req.params.id, session, function(err, session) {
 			res.send('Success');
 		})
 	})
 })
 
+app.get("/chugim/klugie/:id/chuglist"/*, ensureLogin.ensureLoggedIn()*/, function(req, res) {
+	Session.findById(req.params.id, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.send('Please send valid session ID');
+
+		res.set({"Content-Disposition":"attachment; filename=\"Chug List\"; "});
+		res.set({"Content-Type":"text/csv"})
+		res.send(session.chugCSV);
+	})
+})
+
+app.get("/chugim/klugie/:id/camperlist"/*, ensureLogin.ensureLoggedIn()*/, function(req, res) {
+	Session.findById(req.params.id, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.send('Please send valid session ID');
+
+		res.set({"Content-Disposition":"attachment; filename=\"Camper List\"; "});
+		res.set({"Content-Type":"text/csv"})
+		res.send(session.camperCSV);
+	})
+})
 
 // Regular Chug form
 function renderChugPage(repeat, req, res) {

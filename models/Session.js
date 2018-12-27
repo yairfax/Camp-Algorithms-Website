@@ -1,29 +1,6 @@
 var mongoose = require('mongoose')
 
-var klugSchema = new mongoose.Schema({
-	name: {
-		type: String,
-		required: true
-	},
-	popularity: {
-		type: Number,
-		min: 0,
-		max: 1,
-		required: true
-	},
-	eidot: {
-		type: [String],
-		enum: ['aleph', 'vav', 'bet', 'gimmel', 'daled'],
-		required: true
-	},
-	capacity: {
-		type: Number,
-		min: 0,
-		max: 200,
-		required: true
-	},
-	kids: [String]
-})
+
 
 var camperSchema = new mongoose.Schema({
 	name: {
@@ -50,6 +27,31 @@ var camperSchema = new mongoose.Schema({
 	},
 	chug: String,
 	pref_recieved: Number
+})
+
+var klugSchema = new mongoose.Schema({
+	name: {
+		type: String,
+		required: true
+	},
+	popularity: {
+		type: Number,
+		min: 0,
+		max: 1,
+		required: true
+	},
+	eidot: {
+		type: [String],
+		enum: ['aleph', 'vav', 'bet', 'gimmel', 'daled'],
+		required: true
+	},
+	capacity: {
+		type: Number,
+		min: 0,
+		max: 200,
+		required: true
+	},
+	kids: [camperSchema]
 })
 
 var sessionSchema = new mongoose.Schema({
@@ -85,7 +87,7 @@ var sessionSchema = new mongoose.Schema({
 	campers: [camperSchema],
 	lastProduction: Date,
 	tears: [Number],
-	noChug: [String],
+	noChug: [camperSchema],
 	chugCSV: String,
 	camperCSV: String
 })

@@ -25,7 +25,7 @@ function putKidsInChugim(camper_data, chug_data) {
 			// If there is space in the chug
 			if (chug_data[chug].kids.length < chug_data[chug].capacity) {
 				// Put kid in chug
-				chug_data[chug].kids.push(camper.name);
+				chug_data[chug].kids.push(camper);
 				// Assign chug to kid
 				camper.chug = camper.prefs[ind]
 				// Set which preference is recieved
@@ -35,7 +35,7 @@ function putKidsInChugim(camper_data, chug_data) {
 
 			// Didn't recieve preference
 			if (ind == 2) {
-				noChug.push(camper.name);
+				noChug.push(camper);
 				camper.pref_recieved = -1;
 			}
 			ind++
