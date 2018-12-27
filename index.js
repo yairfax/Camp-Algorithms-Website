@@ -366,7 +366,7 @@ app.get("/chugim/klugie/:id/chuglist"/*, ensureLogin.ensureLoggedIn()*/, functio
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
 
-		res.set({"Content-Disposition":`attachment; filename="Chug List ${session.name}"; `});
+		res.set({"Content-Disposition":`attachment; filename="Chug List ${session.name}.csv"; `});
 		res.set({"Content-Type":"text/csv"})
 		res.send(session.chugCSV);
 	})
@@ -377,7 +377,7 @@ app.get("/chugim/klugie/:id/camperlist"/*, ensureLogin.ensureLoggedIn()*/, funct
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
 
-		res.set({"Content-Disposition":`attachment; filename="Camper List ${session.name}"; `});
+		res.set({"Content-Disposition":`attachment; filename="Camper List ${session.name}.csv"; `});
 		res.set({"Content-Type":"text/csv"})
 		res.send(session.camperCSV);
 	})
