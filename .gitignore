@@ -1,6 +1,5 @@
 /node_modules
 /sessions
 *.DS_Store
-/public
 test*
 .env
