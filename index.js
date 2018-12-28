@@ -361,7 +361,7 @@ app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), functio
 	})
 })
 
-app.get("/chugim/klugie/:id/chuglist"/*, ensureLogin.ensureLoggedIn()*/, function(req, res) {
+app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.findById(req.params.id, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
@@ -372,7 +372,7 @@ app.get("/chugim/klugie/:id/chuglist"/*, ensureLogin.ensureLoggedIn()*/, functio
 	})
 })
 
-app.get("/chugim/klugie/:id/camperlist"/*, ensureLogin.ensureLoggedIn()*/, function(req, res) {
+app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.findById(req.params.id, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
