@@ -386,7 +386,7 @@
 			$(".camper-row").show()
 		} else {
 			$(".camper-row").hide()
-			$(`.camper-row[id*='${$(this).val()}' i]`).show()
+			$(`.camper-row[id*='${escape($(this).val())}' i]`).show()
 			if(!$(".camper-row:visible").length) {
 				$("#no-camper").show()
 				$("#camper-in").text($(this).val())
