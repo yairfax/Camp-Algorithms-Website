@@ -237,7 +237,7 @@
 </div>
 
 <!-- Popovers -->
-<div class="popover hide fade bs-popover-bottom" role="tooltip" id="popover354107" style="position: absolute; transform: translate3d(247px, 196px, 0px); top: 0px; left: 0px; will-change: transform;" x-placement="bottom"><div class="arrow" style="left: 34px;"></div><h3 class="popover-header"></h3><div class="popover-body"><div id="eidah-filter">
+<div class="popover hide fade" role="tooltip"><div class="popover-body">
 	<form id="eidah-filter-form">
 		<div class="form-group">
 			{{#each eidot}}
@@ -248,11 +248,11 @@
 			{{/each}}
 		</div>
 	</form>
-</div></div></div>
+</div></div>
 
-<div class="popover hide fade bs-popover-bottom hide" role="tooltip" id="popover354107" style="position: absolute; transform: translate3d(247px, 196px, 0px); top: 0px; left: 0px; will-change: transform;" x-placement="bottom"><div class="arrow" style="left: 34px;"></div><h3 class="popover-header"></h3><div class="popover-body"><div id="eidah-filter">
+<div class="popover hide fade" role="tooltip"><div class="popover-body">
 	<input class="form-control" type="text" placeholder="Filter Camper Names" id="name-field">
-</div></div></div>
+</div></div>
 
 <script>
 	// Function to populate modal with bunk and chug data.
@@ -398,7 +398,7 @@
 	// Set up popovers
 	$('[data-toggle="popover-eidah"]').popover({
 		html: true,
-		content: $("#eidah-filter")
+		content: $("#eidah-filter-form")
   	});
 
   	$('[data-toggle="popover-name"]').popover({
