@@ -207,7 +207,7 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 	}
 
 	newSesh.klugim = klugim_info
-
+	
 	if (editing && editing !== id) {
 		await Session.findByIdAndRemove(editing, function(err, data) {
 			if (err) throw err;

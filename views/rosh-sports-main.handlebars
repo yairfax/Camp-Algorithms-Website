@@ -339,7 +339,7 @@
 	// Check for inconsistencies in camper entries
 	for (var row of $(".camper-row")) {
 		var eidah = $(row).find('td')[1].innerText.toLowerCase();
-		for (var chug of $(row).find('td').slice(4)) {
+		for (var chug of $(row).find('td').slice(4, 7)) {
 			if (!ctxt.chugim[eidah].includes(chug.innerText)) {
 				$(row).addClass('yellowmouse');
 			}
