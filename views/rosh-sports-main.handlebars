@@ -236,6 +236,15 @@
 	</div>
 </div>
 
+<!-- Please Wait Modal -->
+<div class="modal fade" id="pleaseWaitModal">
+	<div class="modal-dialog modal-dialog-centered modal-sm">
+		<div class="modal-content">
+			<div class="modal-body text-center" id="body" style="padding: 50px; font-size: 25pt"><i>Please Wait</i></div>
+		</div>
+	</div>
+</div>
+
 <!-- Popovers -->
 <div class="popover hide fade" role="tooltip"><div class="popover-body">
 	<form id="eidah-filter-form">
@@ -360,6 +369,7 @@
 		// Send post request to update list
 		$("#produceList").on('click', function(event) {
 			if (confirm('Are you sure you want to produce new data? This will overwrite any previously generated data.'))
+				$("#pleaseWaitModal").modal({backdrop: 'static'});
 				$.post(`/chugim/klugie/${ctxt.session._id}/producelist`, function(data) {
 					if (data === "Success") window.location.reload();
 				})
