@@ -87,9 +87,7 @@ var sessionSchema = new mongoose.Schema({
 	campers: [camperSchema],
 	lastProduction: Date,
 	tears: [Number],
-	noChug: [camperSchema],
-	chugCSV: String,
-	camperCSV: String
+	noChug: [camperSchema]
 })
 
 var Session = mongoose.model('Session', sessionSchema);

@@ -277,11 +277,13 @@ app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var id = req.params.id;
 
-	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: {
-		'campers.$.eidah': req.body.eidah,
+	var update = {'campers.$.eidah': req.body.eidah,
 		'campers.$.gender': req.body.gender,
 		'campers.$.bunk': req.body.bunk,
-		'campers.$.prefs': req.body.prefs}}, function(err, data) {
+		'campers.$.prefs': req.body.prefs};
+	if (req.body.chug) update['campers.$.chug'] = req.body.chug;
+
+	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: update}, function(err, data) {
 		if (err) throw err;
 
 		if (!data) return res.send("Please send valid session ID");
@@ -314,11 +316,37 @@ app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), functio
 		session.tears = outData.tears;
 		session.lastProduction = new Date();
 
-		/****************/
-		/* Produce CSVs */
-		/****************/
+		Session.findByIdAndUpdate(req.params.id, session, function(err, session) {
+			res.send('Success');
+		})
+	})
+})
 
-		// Camper CSV
+app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(req, res) {
+	Session.findById(req.params.id, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.send('Please send valid session ID');
+
+		var tempChugim = _.map(session.klugim, function(val) {
+			console.log(val)
+			var kids = _.map(val.kids, (kid) => {return kid.name})
+			return [val.name].concat(kids)
+		})
+		tempChugim.push(['No Chug'].concat(_.pluck(session.noChug, 'name')))
+
+		var chugCSV = createArrayCSVStringifier({});
+		var csvString = chugCSV.stringifyRecords(tempChugim);
+
+		res.set({"Content-Disposition":`attachment; filename="Chug List ${session.name}.csv"; `});
+		res.set({"Content-Type":"text/csv"})
+		res.send(csvString);
+	})
+})
+
+app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function(req, res) {
+	Session.findById(req.params.id, function(err, session) {
+		if (err) throw err;
+		if (!session) return res.send('Please send valid session ID');
 
 		var tempCampers = _.sortBy(_.map(session.campers, function(kid) {
 			return {name: kid.name, eidah: utils.titleCase(kid.eidah), gender: utils.titleCase(kid.gender),
@@ -342,44 +370,11 @@ app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), functio
 		    ]
 		});
 
-		session.camperCSV = camperCSV.getHeaderString() + camperCSV.stringifyRecords(tempCampers);
-
-		// Chugim CSV
-
-		var tempChugim = _.map(outData.chugim, function(val, key) {
-			var kids = _.map(val, (kid) => {return kid.name})
-			return [key].concat(kids)
-		})
-		tempChugim.push(['No Chug'].concat(_.pluck(outData.noChug, 'name')))
-
-		var chugCSV = createArrayCSVStringifier({});
-		session.chugCSV = chugCSV.stringifyRecords(tempChugim);
-
-		Session.findByIdAndUpdate(req.params.id, session, function(err, session) {
-			res.send('Success');
-		})
-	})
-})
-
-app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.findById(req.params.id, function(err, session) {
-		if (err) throw err;
-		if (!session) return res.send('Please send valid session ID');
-
-		res.set({"Content-Disposition":`attachment; filename="Chug List ${session.name}.csv"; `});
-		res.set({"Content-Type":"text/csv"})
-		res.send(session.chugCSV);
-	})
-})
-
-app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.findById(req.params.id, function(err, session) {
-		if (err) throw err;
-		if (!session) return res.send('Please send valid session ID');
+		csvString = camperCSV.getHeaderString() + camperCSV.stringifyRecords(tempCampers);
 
 		res.set({"Content-Disposition":`attachment; filename="Camper List ${session.name}.csv"; `});
 		res.set({"Content-Type":"text/csv"})
-		res.send(session.camperCSV);
+		res.send(csvString);
 	})
 })
 

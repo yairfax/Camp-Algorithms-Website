@@ -210,6 +210,12 @@
 						<select class="custom-select pref" required id="pref{{this}}" name="prefs"></select>
 					</div>
 					{{/each}}
+					{{#if session.lastProduction}}
+					<div class="form-group">
+						<label for="chug">Chug</label>
+						<select class="custom-select" required id="chug" name="chug"></select>
+					</div>
+					{{/if}}
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -276,9 +282,12 @@
 		//Populate Chug List
 		$(`.pref`).empty()
 		$(`.pref`).append(`<option disabled selected>Select Preference</option`)
+		$('#chug').empty();
+		$('#chug').append(`<option disabled selected>Select Preference</option`);
 
 		for (var chug of ctxt.chugim[eidah]) {
 			$(`.pref`).append(`<option value="${chug}">${chug}</option>`)
+			$('#chug').append(`<option value="${chug}">${chug}</option>`);
 		}
 	}
 
@@ -288,11 +297,13 @@
 		data = row.find('td')
 		modal = $(this)
 		
+		// Populate with existing data
 		modal.find('#name').val(data[0].textContent)
 		modal.find('#eidah').val(data[1].textContent.toLowerCase())
 		bunksAndChugim(data[1].textContent.toLowerCase())
 		modal.find('#bunk').val(data[3].textContent)
 		modal.find("#gender").val(data[2].textContent.toLowerCase())
+		if (data[7]) modal.find('#chug').val(data[7].textContent)
 		for (var i = 0; i <= 2; i++) {
 			$(modal.find(`.pref`)[i]).val(data[i+4].textContent)
 		}
@@ -458,10 +469,11 @@
   	}
 
   	function checkGenders() {
+  		var genders = {male: 'boy', female: 'girl'}
   		for (var chug of ctxt.session.klugim) {
   			for (var gender of ['male', 'female'])
 	  			if (onlyGender(chug, gender)) {
-	  				$("#red-flags").append(`<li class="list-group-item">${chug.name} only has one ${gender}.</li>`)
+	  				$("#red-flags").append(`<li class="list-group-item">${chug.name} only has one ${genders[gender]}.</li>`)
 	  			}
   		}
   	}
@@ -475,7 +487,7 @@
 
   	// Populate red flags list
   	if (ctxt.session.lastProduction) {
-  		checkGenders();
   		checkSizes();
+  		checkGenders();
   	}
 </script>
