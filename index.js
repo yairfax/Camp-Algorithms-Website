@@ -280,38 +280,52 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 	var update = {'campers.$.eidah': req.body.eidah,
 		'campers.$.gender': req.body.gender,
 		'campers.$.bunk': req.body.bunk,
-		'campers.$.prefs': req.body.prefs,
-		'campers.$.chug': req.body.chug};
+		'campers.$.prefs': req.body.prefs}
+
+	if (req.body.chug) {
+		update['campers.$.chug'] = req.body.chug;
+	}
+
 
 	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: update}, {select: {'campers.$': 1, _id: 0}}, function(err, data) {
 		if (err) throw err;
 
 		if (!data) return res.send("Please send valid session ID");
 
-		Session.findOneAndUpdate({_id: id, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.body.name}}}, {select: {'klugim.$': 1, _id: 0}}, function(err, oldChug) {
-			//this is the chreft i get for maintaining two data structures
-			if (err) throw err;
-
-			if (!data) return res.send("Please send valid session ID");
-			data.campers[0].chug = req.body.chug
-			Session.findOneAndUpdate({_id: id, 'klugim.name': req.body.chug}, {$push:{'klugim.$.kids':data.campers[0]}}, {select: {'klugim.$': 1, _id: 0}}, (err, newChug) => {
+		if (req.body.chug) {
+			Session.findOneAndUpdate({_id: id, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.body.name}}}, {select: {'klugim.$': 1, _id: 0}}, function(err, oldChug) {
+				//this is the chreft i get for maintaining two data structures
 				if (err) throw err;
 
 				if (!data) return res.send("Please send valid session ID");
-				res.redirect(`/chugim/klugie/${id}`);
+				data.campers[0].chug = req.body.chug
+				Session.findOneAndUpdate({_id: id, 'klugim.name': req.body.chug}, {$push:{'klugim.$.kids':data.campers[0]}}, {select: {'klugim.$': 1, _id: 0}}, (err, newChug) => {
+					if (err) throw err;
+
+					if (!data) return res.send("Please send valid session ID");
+					res.redirect(`/chugim/klugie/${id}`);
+				});
 			});
-		});
+		} else {
+			res.redirect(`/chugim/klugie/${id}`);
+		}
 
 	});
-
 	
 });
 
 app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
-	Session.findByIdAndUpdate(session, {$pull:{campers:{name:req.query.camper}}}, function(err, data) {
+	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}}}, {select: {'campers.$': 1, _id: 0}}, function(err, data) {
+		if (err) throw err;
 		if (!data) return res.send("please send a valid id");
-		res.send("Success");
+
+		Session.findOneAndUpdate({_id: session, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.query.camper}}}, function(err, data) {
+			if (err) throw err;
+			if (!data) return res.send("please send a valid id");
+
+			res.send("Success");
+		})
 	});
 });
 
