@@ -213,8 +213,9 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 			if (err) throw err;
 			newSesh.campers = data.campers;
 			newSesh.active = data.active;
+			// AD KAN -- carry over old session data
 			addSesh = new Session(newSesh);
-			addSesh.save();
+			addSesh.save(utils.callbackErr);
 		})
 	} else if (editing) {
 		await Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
