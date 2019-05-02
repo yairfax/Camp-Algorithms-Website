@@ -286,23 +286,36 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 		update['campers.$.chug'] = req.body.chug;
 	}
 
-
-	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: update}, {select: {'campers.$': 1, _id: 0}}, function(err, data) {
+	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: update, $pull:{noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1, noChug: 1}}, function(err, data) {
 		if (err) throw err;
 
 		if (!data) return res.send("Please send valid session ID");
 
 		if (req.body.chug) {
+			if (!data.campers[0].chug) { // case of kid you're editing didn't have a chug
+				data.tears[3] -= 1;
+			}
+
+			if (data.campers[0].prefs.includes(data.campers[0].chug)) { // case of chug you're taking kid out of was in prefs
+				data.tears[_.indexOf(data.campers[0].prefs, data.campers[0].chug)] -= 1;
+			}
+
+			if (data.campers[0].prefs.includes(req.body.chug)) { // case of chug you're putting the kid in is in prefs
+				data.tears[_.indexOf(data.campers[0].prefs, req.body.chug)] += 1;
+			}
+
+			// original chug
 			Session.findOneAndUpdate({_id: id, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.body.name}}}, {select: {'klugim.$': 1, _id: 0}}, function(err, oldChug) {
-				//this is the chreft i get for maintaining two data structures
+				//this is the chreft I get for maintaining two data structures
 				if (err) throw err;
 
-				if (!data) return res.send("Please send valid session ID");
+				if (data.campers[0].chug && !oldChug) return res.send("Please send valid session ID");
 				data.campers[0].chug = req.body.chug
-				Session.findOneAndUpdate({_id: id, 'klugim.name': req.body.chug}, {$push:{'klugim.$.kids':data.campers[0]}}, {select: {'klugim.$': 1, _id: 0}}, (err, newChug) => {
+				// new chug
+				Session.findOneAndUpdate({_id: id, 'klugim.name': req.body.chug}, {tears: data.tears, $push:{'klugim.$.kids':data.campers[0]}}, {select: {'klugim.$': 1, _id: 0}}, (err, newChug) => {
 					if (err) throw err;
 
-					if (!data) return res.send("Please send valid session ID");
+					if (!newChug) return res.send("Please send valid session ID");
 					res.redirect(`/chugim/klugie/${id}`);
 				});
 			});

@@ -213,8 +213,9 @@
 					{{#if session.lastProduction}}
 					<div class="form-group">
 						<label for="chug">Chug</label>
-						<select class="custom-select" required id="chug" name="chug"></select>
+						<select class="custom-select" id="chug" name="chug" required></select>
 					</div>
+					<p style="font-size: 10pt"><i>Warning:</i> Chug assignment by the Rosh Sports can override the chug's maximum capacity.</p>
 					{{/if}}
 				</div>
 				<div class="modal-footer">
@@ -281,9 +282,9 @@
 
 		//Populate Chug List
 		$(`.pref`).empty()
-		$(`.pref`).append(`<option disabled selected>Select Preference</option`)
+		$(`.pref`).append(`<option disabled selected value="">Select Preference</option>`)
 		$('#chug').empty();
-		$('#chug').append(`<option disabled selected>Select Preference</option`);
+		$('#chug').append(`<option disabled selected value="">Select Preference</option>`);
 
 		for (var chug of ctxt.chugim[eidah]) {
 			$(`.pref`).append(`<option value="${chug}">${chug}</option>`)

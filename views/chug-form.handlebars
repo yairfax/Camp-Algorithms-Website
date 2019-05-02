@@ -30,7 +30,7 @@
 	<div class="form-group">
 		<label for='gender'>Gender</label>
 		<select class="custom-select" required name="gender">
-			<option selected disabled>Select Gender</option>
+			<option value="" selected disabled>Select Gender</option>
 			<option value="male">Male</option>
 			<option value="female">Female</option>
 		</select>
@@ -58,7 +58,7 @@
 
 			// Create bunk list
 			$("#bunk-select").empty();
-			$("#bunk-select").append(`<option selected disabled>Select Bunk</option>`)
+			$("#bunk-select").append(`<option selected disabled value="">Select Bunk</option>`)
 			for (var bunk of ctxt.bunks[eidah]) {
 				$("#bunk-select").append(`<option value="${bunk}">${bunk}</option>`)
 			}
@@ -66,7 +66,7 @@
 			//Populate Chug List
 			for (var row of $(".pref")) {
 					$(row).empty()
-					$(row).append(`<option disabled selected>Select Preference</option>`)
+					$(row).append(`<option disabled selected value="">Select Preference</option>`)
 			}
 			for (var chug of ctxt.chugim[eidah]) {
 				$(`.pref`).append(`<option value="${chug}">${chug}</option>`)
