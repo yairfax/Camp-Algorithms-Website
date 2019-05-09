@@ -284,7 +284,12 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 		'campers.$.prefs': req.body.prefs}
 
 	if (req.body.chug) {
-		update['campers.$.chug'] = req.body.chug;
+		update['campers.$.chug'] = req.body.chug
+		if (req.body.prefs.includes(req.body.chug)) {
+			update['campers.$.pref_recieved'] = _.indexOf(req.body.prefs, req.body.chug) + 1
+		} else {
+			update['campers.$.pref_recieved'] = -1
+		}
 	}
 
 	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: update, $pull:{noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1, noChug: 1}}, function(err, data) {
@@ -330,16 +335,33 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 
 app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
-	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}}}, {select: {'campers.$': 1, _id: 0}}, function(err, data) {
+	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}, noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1}}, function(err, data) {
 		if (err) throw err;
 		if (!data) return res.send("please send a valid id");
 
-		Session.findOneAndUpdate({_id: session, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.query.camper}}}, function(err, data) {
-			if (err) throw err;
-			if (!data) return res.send("please send a valid id");
+		if (data.tears) { // case of chug list hasn't been produced yet
+			if (!data.campers[0].chug) { // case of kid you're editing didn't have a chug
+				data.tears[3] -= 1;
+			}
 
+			if (data.campers[0].prefs.includes(data.campers[0].chug)) { // case of chug you're taking kid out of was in prefs
+				data.tears[_.indexOf(data.campers[0].prefs, data.campers[0].chug)] -= 1;
+			}
+
+			Session.findOneAndUpdate({_id: session, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.query.camper}}}, function(err, data0) {
+				if (err) throw err;
+				if (!data) return res.send("please send a valid id");
+
+				Session.findByIdAndUpdate(session, {tears: data.tears}, function(err, data) {
+					if (err) throw err;
+					if (!data) return res.send("please send a valid id");
+
+					res.send("Success");
+				});
+			});
+		} else {
 			res.send("Success");
-		})
+		}
 	});
 });
 
