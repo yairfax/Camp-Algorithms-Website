@@ -370,7 +370,7 @@
 	// If any campers have invalid info, don't produce chug list
 	if($(".camper-row.yellowmouse").length) {
 		$("#produceList").on('click', function(event) {
-			alert(`There are ${$(".trow.yellowmouse").length} campers entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
+			alert(`There are ${$(".trow.yellowmouse").length} camper entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
 		});
 	} else if (ctxt.session.active) {
 		// Prevent list production on active session
@@ -423,10 +423,45 @@
 		content: $("#eidah-filter-form")
   	});
 
+  	$('[data-toggle="popover-eidah"]').on('show.bs.popover', () => {
+  		$('[data-toggle="popover-name"]').popover('hide')
+  	})
+
   	$('[data-toggle="popover-name"]').popover({
 		html: true,
 		content: $("#name-field")
   	});
+
+  	$('[data-toggle="popover-name"]').on('show.bs.popover', () => {
+  		$('[data-toggle="popover-eidah"]').popover('hide')
+  	})
+
+  	$(window).keyup((event) => {
+  		if (event.originalEvent.key == "Escape") {
+  			$('[data-toggle*=popover]').popover('hide')
+  			$('.modal').modal('hide')
+  		}
+  	})
+
+  	// $(window).click(() => {
+  	// 	$('[data-toggle*=popover]').popover('hide')
+  	// })
+
+  	// $('[data-toggle*=popover]').click((event) => {
+  	// 	event.stopPropogation()
+  	// })
+
+  	$(document).mouseup(function(e) 
+	{
+	    var container = $('.popover');
+
+	    // if the target of the click isn't the container nor a descendant of the container
+	    if (!container.is(e.target) && container.has(e.target).length === 0) 
+	    {
+	        $('[data-toggle*=popover]').popover('hide')
+	    }
+	});
+
 
   	// Eidah filtering
   	$("#eidah-filter-form").on('change', function() {
