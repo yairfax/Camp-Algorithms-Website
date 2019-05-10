@@ -101,7 +101,7 @@
 			</tr>
 			{{/each}}
 		</table>
-		<h3 id="no-camper" style="text-align: center">"<t id="camper-in"></t>" not found.</h3>
+		<h3 id="no-camper" style="text-align: center">"<t id="camper-in"></t> not found.</h3>
 		{{else}}
 		<h3 style="text-align: center; padding: 20px">No Campers Entered Yet</h3>
 		{{/if}}
@@ -215,7 +215,7 @@
 						<label for="chug">Chug</label>
 						<select class="custom-select" id="chug" name="chug" required></select>
 					</div>
-					<p style="font-size: 10pt"><i>Warning:</i> Chug assignment by the Rosh Sports can override the chug's maximum capacity.</p>
+					<p style="font-size: 10pt; padding-bottom: 0px"><i>Warning:</i> Chug assignment by the Rosh Sports can override the chug's maximum capacity.</p>
 					{{/if}}
 				</div>
 				<div class="modal-footer">
@@ -400,23 +400,6 @@
 		alert("Please activate session to enter camper data.")
 	});
 
-	// Search field
-	$("#no-camper").hide()
-	$("#name-field").keyup(function() {
-		$("#no-camper").hide()
-		if ($(this).val() == "") {
-			$(".camper-row").show()
-		} else {
-			$(".camper-row").hide()
-			$(`.camper-row[id*='${$(this).val().replace(new RegExp("\'", 'g'), "\\'")}' i]`).show()
-			if(!$(".camper-row:visible").length) {
-				$("#no-camper").show()
-				$("#camper-in").text($(this).val())
-			}
-
-		}
-	});
-
 	// Set up popovers
 	$('[data-toggle="popover-eidah"]').popover({
 		html: true,
@@ -436,20 +419,12 @@
   		$('[data-toggle="popover-eidah"]').popover('hide')
   	})
 
-  	$(window).keyup((event) => {
+  	$(document).keyup((event) => {
   		if (event.originalEvent.key == "Escape") {
   			$('[data-toggle*=popover]').popover('hide')
   			$('.modal').modal('hide')
   		}
   	})
-
-  	// $(window).click(() => {
-  	// 	$('[data-toggle*=popover]').popover('hide')
-  	// })
-
-  	// $('[data-toggle*=popover]').click((event) => {
-  	// 	event.stopPropogation()
-  	// })
 
   	$(document).mouseup(function(e) 
 	{
@@ -462,20 +437,53 @@
 	    }
 	});
 
+  	var feidot = [], fname = ""
 
   	// Eidah filtering
   	$("#eidah-filter-form").on('change', function() {
-  		var ceidot = $(this).serializeArray();
-  		
-  		if (ceidot.length) {
-  			$(".camper-row").hide();
-  			for (var eidah of ceidot) {
-  				$(`.${eidah.value}`).show();
-  			}
-  		} else {
-  			$(".camper-row").show();
-  		}
+  		feidot = $(this).serializeArray()
+  		filter()
   	});
+
+  	// Search field
+	$("#no-camper").hide()
+	$("#name-field").keyup(function() {
+		fname = $(this).val()
+		filter()
+	});
+
+	function filter() {
+		$("#no-camper").hide()
+		$(".camper-row").hide()
+
+		var selector = ""
+
+		if (fname != "") {
+			selector = `[id*='${fname.replace(new RegExp("\'", 'g'), "\\'")}' i]`
+		}
+
+		if (feidot.length) {
+			selector = _.reduce(feidot, function(memo, eidah) {return memo + `.${eidah.value + selector},`}, "").slice(0, -1)
+		} else {
+			selector = '.camper-row' + selector
+		}
+
+		$(selector).show()
+
+		if (!$(".camper-row:visible").length) {
+			$("#no-camper").show()
+			var add = ""
+			if (feidot.length) {
+				eidot = _.reduce(feidot, (memo, ele) => {return memo + ele.value.charAt(0).toUpperCase() + ele.value.slice(1) + ", "}, "").slice(0, -2)
+				if (feidot.length == 1) 
+					add = " in Eidah "
+				else
+					add = " in Eidot "
+				add += eidot + " "
+			}
+			$("#camper-in").text(fname + '"' + add)
+		}
+	}
 
   	// Enable Tooltip
   	$('[data-toggle*="popover"]').tooltip({
