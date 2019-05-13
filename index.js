@@ -390,7 +390,6 @@ app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(re
 		if (!session) return res.send('Please send valid session ID');
 
 		var tempChugim = _.map(session.klugim, function(val) {
-			console.log(val)
 			var kids = _.map(val.kids, (kid) => {return kid.name})
 			return [val.name].concat(kids)
 		})
