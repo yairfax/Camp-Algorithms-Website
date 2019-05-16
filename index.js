@@ -202,30 +202,56 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 			name: name[i],
 			capacity: parseInt(capacity[i]),
 			popularity: parseFloat(popularity[i]),
-			eidot: eidot[i]
+			eidot: eidot[i],
+			kids: []
 		})
 	}
 
 	newSesh.klugim = klugim_info
 	
-	if (editing && editing !== id) {
-		await Session.findByIdAndRemove(editing, function(err, data) {
-			if (err) throw err;
-			newSesh.campers = data.campers;
-			newSesh.active = data.active;
-			// AD KAN -- carry over old session data
-			addSesh = new Session(newSesh);
-			addSesh.save(utils.callbackErr);
-		})
-	} else if (editing) {
-		await Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
-	} else {
-		newSesh.active = false;
-		var addSesh = new Session(newSesh)
-		addSesh.save(utils.callbackErr)
-	}
+	Session.findById(editing, async (err, data) => {
+		if (err) throw err;
 
-	res.redirect("/chugim/klugie/" + id);
+		if (!data) { // Case: session didn't exist before
+			newSesh.active = false;
+			var addSesh = new Session(newSesh)
+			addSesh.save(utils.callbackErr)
+		} else { // Case: session did exist before
+			if (data.lastProduction) { // Case: previous session data already had chug production
+				newSesh.tears = [0, 0, 0, 0]
+				newSesh.noChug = []
+				newSesh.campers = []
+				for (var kid of data.campers) {
+					pref = kid.prefs.indexOf(kid.chug) // if chug no longer exists that will get taken care of below
+					var newKlug = _.findWhere(newSesh.klugim, {name: kid.chug})
+					if (newKlug) { // Case: chug kid is placed in exists
+						newSesh.tears[pref] += 1
+						kid.pref_recieved = pref + 1
+						newKlug.kids.push(kid)
+					} else { // Case: chug kid is placed in doesn't exist anymore
+						newSesh.tears[3] += 1
+						kid.pref_recieved = -1
+						newSesh.noChug.push(kid)
+					}
+					newSesh.campers.push(kid)
+				}
+			}
+			if (editing !== id) { // Case: new session id for old session record. delete old record, update new record
+				await Session.findByIdAndRemove(editing, function(err, data) {
+					if (err) throw err;
+					newSesh.active = data.active;
+					newSesh.lastProduction = data.lastProduction;
+					addSesh = new Session(newSesh);
+					addSesh.save(utils.callbackErr);
+				})
+			} else { // Case: old session id, just use update
+				await Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
+			}
+		}
+		res.redirect("/chugim/klugie/" + id);
+	})
+
+	
 })
 
 app.post("/chugim/klugie/:id/activate", ensureLogin.ensureLoggedIn(), function(req, res){
@@ -335,11 +361,11 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 
 app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
-	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}, noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1}}, function(err, data) {
+	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}, noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1, lastProduction: 1}}, function(err, data) {
 		if (err) throw err;
 		if (!data) return res.send("please send a valid id");
 
-		if (data.tears) { // case of chug list hasn't been produced yet
+		if (data.lastProduction) { // case of chug list hasn't been produced yet
 			if (!data.campers[0].chug) { // case of kid you're editing didn't have a chug
 				data.tears[3] -= 1;
 			}
