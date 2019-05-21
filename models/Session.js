@@ -1,7 +1,5 @@
 var mongoose = require('mongoose')
 
-
-
 var camperSchema = new mongoose.Schema({
 	name: {
 		type: String,

@@ -430,15 +430,20 @@ app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(re
 	})
 })
 
+//TODO: change camper list so that if chug doesn't exist it says so
 app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function(req, res) {
 	Session.findById(req.params.id, function(err, session) {
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
 
 		var tempCampers = _.sortBy(_.map(session.campers, function(kid) {
+			var inChug = ""
+			if ((_.findWhere(session.klugim, {name: kid.chug}))) {
+				inChug = kid.chug
+			}
 			return {name: kid.name, eidah: utils.titleCase(kid.eidah), gender: utils.titleCase(kid.gender),
 				bunk: kid.bunk, pref1: kid.prefs[0], pref2: kid.prefs[1], pref3: kid.prefs[2],
-				pref_recieved: kid.pref_recieved, chug: kid.chug};
+				pref_recieved: kid.pref_recieved, chug: inChug};
 		}), function(elt) {
 			return upperEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]; 
 		});
