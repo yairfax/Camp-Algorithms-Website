@@ -415,8 +415,9 @@
 		content: $("#name-field")
   	});
 
-  	$('[data-toggle="popover-name"]').on('show.bs.popover', () => {
+  	$('[data-toggle="popover-name"]').on('shown.bs.popover', () => {
   		$('[data-toggle="popover-eidah"]').popover('hide')
+  		$('#name-field').focus().select()
   	})
 
   	$(document).keyup((event) => {
