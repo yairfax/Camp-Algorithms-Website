@@ -361,7 +361,7 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 
 app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	var session = req.params.id;
-	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}, noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1, lastProduction: 1}}, function(err, data) {
+	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}, noChug:{name:req.query.camper}}}, {select: {'campers.$': 1, _id: 0, tears: 1, lastProduction: 1}}, function(err, data) {
 		if (err) throw err;
 		if (!data) return res.send("please send a valid id");
 
@@ -501,18 +501,26 @@ app.get("/chugim/:id", function(req, res) {
 });
 
 app.post("/chugim/:id", function(req, res) {
-	Session.findOne({_id: req.params.id, active: true, 'campers.name': req.body.name}, function(err, session) {
+	Session.findOne({_id: req.params.id, active: true}, function(err, session) {
 		if (err) throw err;
-
 		if (!session) {
-			Session.findOneAndUpdate({_id: req.params.id, active: true}, {$push: {'campers': req.body}}, function(err, data) {
-				if (err) throw err;
-
-				renderChugPage(true, req, res)
-			});
-		} else {
-			renderChugPage(false, req, res);
+			return res.send("send a valid session id");
 		}
+		var camper = req.body
+		var update
+		if (session.lastProduction) {
+			camper.pref_recieved = -1
+			update = {$push: {'campers': camper, 'noChug': camper}}
+			update['tears'] = session.tears
+			update['tears'][3] += 1;
+		} else {
+			update = {$push: {'campers': camper}}
+		}
+		Session.findOneAndUpdate({_id: req.params.id, active: true}, update, function(err, data) {
+			if (err) throw err;
+
+			renderChugPage(true, req, res)
+		});
 	})
 	
 });
