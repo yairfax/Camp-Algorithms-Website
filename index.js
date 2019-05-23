@@ -215,7 +215,7 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 		if (!data) { // Case: session didn't exist before
 			newSesh.active = false;
 			var addSesh = new Session(newSesh)
-			addSesh.save(utils.callbackErr)
+			await addSesh.save(utils.callbackErr)
 		} else { // Case: session did exist before
 			if (data.lastProduction) { // Case: previous session data already had chug production
 				newSesh.tears = [0, 0, 0, 0]

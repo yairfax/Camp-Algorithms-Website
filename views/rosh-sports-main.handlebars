@@ -380,11 +380,12 @@
 	} else {
 		// Send post request to update list
 		$("#produceList").on('click', function(event) {
-			if (confirm('Are you sure you want to produce new data? This will overwrite any previously generated data.'))
+			if (confirm('Are you sure you want to produce new data? This will overwrite any previously generated data.')) {
 				$("#pleaseWaitModal").modal({backdrop: 'static'});
 				$.post(`/chugim/klugie/${ctxt.session._id}/producelist`, function(data) {
 					if (data === "Success") window.location.reload();
 				})
+			}
 		});
 	}
 
