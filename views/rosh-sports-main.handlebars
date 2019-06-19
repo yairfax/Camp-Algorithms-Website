@@ -361,7 +361,9 @@
 	for (var row of $(".camper-row")) {
 		var eidah = $(row).find('td')[1].innerText.toLowerCase();
 		for (var chug of $(row).find('td').slice(4, 7)) {
-			if (!ctxt.chugim[eidah].includes(chug.innerText)) {
+			if (!(_.map(ctxt.chugim[eidah], (ele) => {return ele.trim()}).includes(chug.innerText))) {
+				console.log(ctxt.chugim[eidah])
+				console.log(chug.innerText)
 				$(row).addClass('yellowmouse');
 			}
 		}
