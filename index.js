@@ -57,21 +57,23 @@ var hbs = exphbs.create({
 		titleCase: utils.titleCase
 	},
 	defaultLayout: 'main',
-	partialsDir: "views/partials/"
+	partialsDir: "views/partials/",
 })
+app.locals.devMode = args.dev;
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
-app.use('/public', express.static('public'));
+app.use('/static', express.static('public'));
 app.use(expsession({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
-const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
-const upperEidot = _.map(lowerEidot, utils.titleCase)
 
 // Set up express-state
 expstate.extend(app);
 app.set("state namespace", 'ctxt');
+
+const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
+const upperEidot = _.map(lowerEidot, utils.titleCase)
 
 // Set up passport
 passport.use(new Strategy(function (username, password, cb) {

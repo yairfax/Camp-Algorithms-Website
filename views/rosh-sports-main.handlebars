@@ -13,7 +13,6 @@
 		text-align: center;
 		padding-top: 10px;
 	}
-
 </style>
 
 <!--Dropdown menu-->
@@ -119,7 +118,7 @@
 				</tr>
 			</thead>
 			{{#each session.klugim}}
-			<tr class="trow" {{#if this.kids}}data-toggle="modal" data-target="#chugModal"{{/if}}>
+			<tr class="trow" {{#if this.kids}}data-toggle="modal" data-target="#chugModal" {{/if}}>
 				<td>{{this.name}}</td>
 				<td>{{this.capacity}}</td>
 				<td>{{this.popularity}}</td>
@@ -136,39 +135,39 @@
 	<div class="tab-pane fade" id="stat-view" role="tabpanel" aria-labelledby="stat-tab">
 		<div class="row" style="padding: 10px">
 			<div class="col">
-	    		<h4>Excel Download Links</h4>
-	    		<ul class="list-group">
+				<h4>Excel Download Links</h4>
+				<ul class="list-group">
 					<li class="list-group-item"><a href='/chugim/klugie/{{sessionID}}/chuglist'>Chug List</a></li>
 					<li class="list-group-item"><a href='/chugim/klugie/{{sessionID}}/camperlist'>Camper List</a></li>
 				</ul>
 				<h4>Chug List Last Produced</h4>
 				{{session.lastProduction}}
-	    	</div>
-	    	<div class="col">
-	    		<h4>Preferences Recieved</h4>
-	    		<ul class="list-group">
-	    			<li class="list-group-item">Received #1 Preference: {{session.tears.[0]}}</li>
-	    			<li class="list-group-item">Received #2 Preference: {{session.tears.[1]}}</li>
-	    			<li class="list-group-item">Received #3 Preference: {{session.tears.[2]}}</li>
-	    			<li class="list-group-item"><b>Unplaced Campers: {{session.tears.[3]}}</b>
-	    				<ul>
-	    					{{#each session.noChug}}
-	    					<li>{{this.name}}</li>
-	    					{{/each}}
-	    				</ul>
-	    			</li>
+			</div>
+			<div class="col">
+				<h4>Preferences Recieved</h4>
+				<ul class="list-group">
+					<li class="list-group-item">Received #1 Preference: {{session.tears.[0]}}</li>
+					<li class="list-group-item">Received #2 Preference: {{session.tears.[1]}}</li>
+					<li class="list-group-item">Received #3 Preference: {{session.tears.[2]}}</li>
+					<li class="list-group-item"><b>Unplaced Campers: {{session.tears.[3]}}</b>
+						<ul>
+							{{#each session.noChug}}
+							<li>{{this.name}}</li>
+							{{/each}}
+						</ul>
+					</li>
 				</ul>
-	    	</div>
-	    	<div class="col">
-	    		<h4>Red Flags</h4>
-	    		<ul class="list-group" id="red-flags"></ul>
-	    	</div>
+			</div>
+			<div class="col">
+				<h4>Red Flags</h4>
+				<ul class="list-group" id="red-flags"></ul>
+			</div>
 		</div>
 	</div>
 </div>
 
 <!-- Camper Modal -->
-<div class="modal fade" id="camperModal" >
+<div class="modal fade" id="camperModal">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -253,22 +252,26 @@
 </div>
 
 <!-- Popovers -->
-<div class="popover hide fade" role="tooltip"><div class="popover-body">
-	<form id="eidah-filter-form">
-		<div class="form-group">
-			{{#each eidot}}
-			<div class="form-check">
-				<input class="form-check-input eidah" type='checkbox' name="eidah" value="{{toLowerCase this}}">
-				<label class="form-check-label" for="{{toLowerCase this}}">{{this}}</label>
+<div class="popover hide fade" role="tooltip">
+	<div class="popover-body">
+		<form id="eidah-filter-form">
+			<div class="form-group">
+				{{#each eidot}}
+				<div class="form-check">
+					<input class="form-check-input eidah" type='checkbox' name="eidah" value="{{toLowerCase this}}">
+					<label class="form-check-label" for="{{toLowerCase this}}">{{this}}</label>
+				</div>
+				{{/each}}
 			</div>
-			{{/each}}
-		</div>
-	</form>
-</div></div>
+		</form>
+	</div>
+</div>
 
-<div class="popover hide fade" role="tooltip"><div class="popover-body">
-	<input class="form-control" type="text" placeholder="Filter Camper Names" id="name-field">
-</div></div>
+<div class="popover hide fade" role="tooltip">
+	<div class="popover-body">
+		<input class="form-control" type="text" placeholder="Filter Camper Names" id="name-field">
+	</div>
+</div>
 
 <script>
 	// Function to populate modal with bunk and chug data.
@@ -293,11 +296,11 @@
 	}
 
 	// Use modal presentation event to populate modal with data
-	$("#camperModal").on("show.bs.modal", function(event) {
+	$("#camperModal").on("show.bs.modal", function (event) {
 		var row = $(event.relatedTarget)
 		data = row.find('td')
 		modal = $(this)
-		
+
 		// Populate with existing data
 		modal.find('#name').val(data[0].textContent)
 		modal.find('#eidah').val(data[1].textContent.toLowerCase())
@@ -306,34 +309,34 @@
 		modal.find("#gender").val(data[2].textContent.toLowerCase())
 		if (data[7]) modal.find('#chug').val(data[7].textContent)
 		for (var i = 0; i <= 2; i++) {
-			$(modal.find(`.pref`)[i]).val(data[i+4].textContent)
+			$(modal.find(`.pref`)[i]).val(data[i + 4].textContent)
 		}
 	});
 
 	// In camper modal, reset bunks and chugim if eidah changes
-	$("#eidah").on("change", function() {
+	$("#eidah").on("change", function () {
 		bunksAndChugim($(this).val())
 	});
 
 	// delete request for camper
-	$("#delete").on('click', function() {
+	$("#delete").on('click', function () {
 		$.ajax({
 			url: `/chugim/klugie/${ctxt.sessionID}?camper=${$("#name").val().replace(/ /, '+')}`,
 			type: 'DELETE',
-			success: function(result) {
-				if (result === "Success") {window.location.replace(`/chugim/klugie/${ctxt.sessionID}`);}
+			success: function (result) {
+				if (result === "Success") { window.location.replace(`/chugim/klugie/${ctxt.sessionID}`); }
 			}
 		})
 	});
 
 	// delete request for delete session
-	$("#delete-session").on('click', function() {
+	$("#delete-session").on('click', function () {
 		if (confirm("Are you sure you want to delete this session? All of the camper data will be permentantly deleted. This action is not undoable."))
 			$.ajax({
 				url: `/chugim/klugie/${ctxt.sessionID}/delete`,
 				type: 'DELETE',
-				success: function(result) {
-					if (result === "Success") {window.location.replace(`/chugim/klugie`);}
+				success: function (result) {
+					if (result === "Success") { window.location.replace(`/chugim/klugie`); }
 				}
 			})
 	});
@@ -341,19 +344,23 @@
 
 	// Set coloring for tables
 	$(".camper-row").on({
-		'mouseenter': function() {
-			$(this).addClass('bluemouse') },
-		'mouseleave': function() {
-			$(this).removeClass('bluemouse') }
+		'mouseenter': function () {
+			$(this).addClass('bluemouse')
+		},
+		'mouseleave': function () {
+			$(this).removeClass('bluemouse')
+		}
 	});
 
 	// Set coloring for chugim if data is available
 	if (ctxt.session.lastProduction) {
 		$(".trow").on({
-			'mouseenter': function() {
-				$(this).addClass('bluemouse') },
-			'mouseleave': function() {
-				$(this).removeClass('bluemouse') }
+			'mouseenter': function () {
+				$(this).addClass('bluemouse')
+			},
+			'mouseleave': function () {
+				$(this).removeClass('bluemouse')
+			}
 		});
 	}
 
@@ -361,7 +368,7 @@
 	for (var row of $(".camper-row")) {
 		var eidah = $(row).find('td')[1].innerText.toLowerCase();
 		for (var chug of $(row).find('td').slice(4, 7)) {
-			if (!(_.map(ctxt.chugim[eidah], (ele) => {return ele.trim()}).includes(chug.innerText))) {
+			if (!(_.map(ctxt.chugim[eidah], (ele) => { return ele.trim() }).includes(chug.innerText))) {
 				console.log(ctxt.chugim[eidah])
 				console.log(chug.innerText)
 				$(row).addClass('yellowmouse');
@@ -370,21 +377,21 @@
 	}
 
 	// If any campers have invalid info, don't produce chug list
-	if($(".camper-row.yellowmouse").length) {
-		$("#produceList").on('click', function(event) {
+	if ($(".camper-row.yellowmouse").length) {
+		$("#produceList").on('click', function (event) {
 			alert(`There are ${$(".trow.yellowmouse").length} camper entries who require attention. The chugim they signed up for are no longer available. Please find the campers highlighted in yellow and resolve these conflicts before producing the final chug list.`)
 		});
 	} else if (ctxt.session.active) {
 		// Prevent list production on active session
-		$("#produceList").on('click', function(event) {
+		$("#produceList").on('click', function (event) {
 			alert("Cannot produce chug list while session is active.");
 		});
 	} else {
 		// Send post request to update list
-		$("#produceList").on('click', function(event) {
+		$("#produceList").on('click', function (event) {
 			if (confirm('Are you sure you want to produce new data? This will overwrite any previously generated data.')) {
-				$("#pleaseWaitModal").modal({backdrop: 'static'});
-				$.post(`/chugim/klugie/${ctxt.session._id}/producelist`, function(data) {
+				$("#pleaseWaitModal").modal({ backdrop: 'static' });
+				$.post(`/chugim/klugie/${ctxt.session._id}/producelist`, function (data) {
 					if (data === "Success") window.location.reload();
 				})
 			}
@@ -392,14 +399,14 @@
 	}
 
 	//Activation
-	$("#activate").on('click', function() {
-		$.post(`/chugim/klugie/${ctxt.session._id}/activate`, function(data) {
+	$("#activate").on('click', function () {
+		$.post(`/chugim/klugie/${ctxt.session._id}/activate`, function (data) {
 			if (data === "Success") window.location.reload();
 		})
 	});
 
 	// Alert message for activation if try to enter camper data
-	$("#enter-campers-invalid").on('click', function() {
+	$("#enter-campers-invalid").on('click', function () {
 		alert("Please activate session to enter camper data.")
 	});
 
@@ -407,51 +414,49 @@
 	$('[data-toggle="popover-eidah"]').popover({
 		html: true,
 		content: $("#eidah-filter-form")
-  	});
-
-  	$('[data-toggle="popover-eidah"]').on('show.bs.popover', () => {
-  		$('[data-toggle="popover-name"]').popover('hide')
-  	})
-
-  	$('[data-toggle="popover-name"]').popover({
-		html: true,
-		content: $("#name-field")
-  	});
-
-  	$('[data-toggle="popover-name"]').on('shown.bs.popover', () => {
-  		$('[data-toggle="popover-eidah"]').popover('hide')
-  		$('#name-field').focus().select()
-  	})
-
-  	$(document).keyup((event) => {
-  		if (event.originalEvent.key == "Escape") {
-  			$('[data-toggle*=popover]').popover('hide')
-  			$('.modal').modal('hide')
-  		}
-  	})
-
-  	$(document).mouseup(function(e) 
-	{
-	    var container = $('.popover');
-
-	    // if the target of the click isn't the container nor a descendant of the container
-	    if (!container.is(e.target) && container.has(e.target).length === 0) 
-	    {
-	        $('[data-toggle*=popover]').popover('hide')
-	    }
 	});
 
-  	var feidot = [], fname = ""
+	$('[data-toggle="popover-eidah"]').on('show.bs.popover', () => {
+		$('[data-toggle="popover-name"]').popover('hide')
+	})
 
-  	// Eidah filtering
-  	$("#eidah-filter-form").on('change', function() {
-  		feidot = $(this).serializeArray()
-  		filter()
-  	});
+	$('[data-toggle="popover-name"]').popover({
+		html: true,
+		content: $("#name-field")
+	});
 
-  	// Search field
+	$('[data-toggle="popover-name"]').on('shown.bs.popover', () => {
+		$('[data-toggle="popover-eidah"]').popover('hide')
+		$('#name-field').focus().select()
+	})
+
+	$(document).keyup((event) => {
+		if (event.originalEvent.key == "Escape") {
+			$('[data-toggle*=popover]').popover('hide')
+			$('.modal').modal('hide')
+		}
+	})
+
+	$(document).mouseup(function (e) {
+		var container = $('.popover');
+
+		// if the target of the click isn't the container nor a descendant of the container
+		if (!container.is(e.target) && container.has(e.target).length === 0) {
+			$('[data-toggle*=popover]').popover('hide')
+		}
+	});
+
+	var feidot = [], fname = ""
+
+	// Eidah filtering
+	$("#eidah-filter-form").on('change', function () {
+		feidot = $(this).serializeArray()
+		filter()
+	});
+
+	// Search field
 	$("#no-camper").hide()
-	$("#name-field").keyup(function() {
+	$("#name-field").keyup(function () {
 		fname = $(this).val()
 		filter()
 	});
@@ -467,7 +472,7 @@
 		}
 
 		if (feidot.length) {
-			selector = _.reduce(feidot, function(memo, eidah) {return memo + `.${eidah.value + selector},`}, "").slice(0, -1)
+			selector = _.reduce(feidot, function (memo, eidah) { return memo + `.${eidah.value + selector},` }, "").slice(0, -1)
 		} else {
 			selector = '.camper-row' + selector
 		}
@@ -478,8 +483,8 @@
 			$("#no-camper").show()
 			var add = ""
 			if (feidot.length) {
-				eidot = _.reduce(feidot, (memo, ele) => {return memo + ele.value.charAt(0).toUpperCase() + ele.value.slice(1) + ", "}, "").slice(0, -2)
-				if (feidot.length == 1) 
+				eidot = _.reduce(feidot, (memo, ele) => { return memo + ele.value.charAt(0).toUpperCase() + ele.value.slice(1) + ", " }, "").slice(0, -2)
+				if (feidot.length == 1)
 					add = " in Eidah "
 				else
 					add = " in Eidot "
@@ -489,53 +494,53 @@
 		}
 	}
 
-  	// Enable Tooltip
-  	$('[data-toggle*="popover"]').tooltip({
-  		placement: 'top'
-  	});
+	// Enable Tooltip
+	$('[data-toggle*="popover"]').tooltip({
+		placement: 'top'
+	});
 
-  	// Chug Modal
-  	$("#chugModal").on('show.bs.modal', function(event) {
-  		data = $(event.relatedTarget).find('td');
-  		modal = $(this);
+	// Chug Modal
+	$("#chugModal").on('show.bs.modal', function (event) {
+		data = $(event.relatedTarget).find('td');
+		modal = $(this);
 
-  		modal.find("#title").text(`Campers in ${data[0].textContent}`);
-  		modal.find("#body").empty();
+		modal.find("#title").text(`Campers in ${data[0].textContent}`);
+		modal.find("#body").empty();
 
-  		kids = _.findWhere(ctxt.session.klugim, {name: data[0].textContent});
-  		kids = kids.kids;
+		kids = _.findWhere(ctxt.session.klugim, { name: data[0].textContent });
+		kids = kids.kids;
 
-  		for (var kid of kids) {
-  			modal.find("#body").append(`${kid.name}<br>`)
-  		}
-  	});
+		for (var kid of kids) {
+			modal.find("#body").append(`${kid.name}<br>`)
+		}
+	});
 
 
-  	// Check for red flags functions
-  	function onlyGender(chug, gender) {
-  		return _.where(chug.kids, {gender: gender}).length === 1
-  	}
+	// Check for red flags functions
+	function onlyGender(chug, gender) {
+		return _.where(chug.kids, { gender: gender }).length === 1
+	}
 
-  	function checkGenders() {
-  		var genders = {male: 'boy', female: 'girl'}
-  		for (var chug of ctxt.session.klugim) {
-  			for (var gender of ['male', 'female'])
-	  			if (onlyGender(chug, gender)) {
-	  				$("#red-flags").append(`<li class="list-group-item">${chug.name} only has one ${genders[gender]}.</li>`)
-	  			}
-  		}
-  	}
+	function checkGenders() {
+		var genders = { male: 'boy', female: 'girl' }
+		for (var chug of ctxt.session.klugim) {
+			for (var gender of ['male', 'female'])
+				if (onlyGender(chug, gender)) {
+					$("#red-flags").append(`<li class="list-group-item">${chug.name} only has one ${genders[gender]}.</li>`)
+				}
+		}
+	}
 
-  	function checkSizes() {
-  		for (var chug of ctxt.session.klugim) {
-  			if (!chug.kids || chug.kids.length < 5)
-  				$("#red-flags").append(`<li class="list-group-item">${chug.name} has fewer than 5 campers.</li>`)
-  		}
-  	}
+	function checkSizes() {
+		for (var chug of ctxt.session.klugim) {
+			if (!chug.kids || chug.kids.length < 5)
+				$("#red-flags").append(`<li class="list-group-item">${chug.name} has fewer than 5 campers.</li>`)
+		}
+	}
 
-  	// Populate red flags list
-  	if (ctxt.session.lastProduction) {
-  		checkSizes();
-  		checkGenders();
-  	}
+	// Populate red flags list
+	if (ctxt.session.lastProduction) {
+		checkSizes();
+		checkGenders();
+	}
 </script>
