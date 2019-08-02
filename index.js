@@ -3,8 +3,6 @@ const bodyParser = require('body-parser');
 const _ = require("underscore");
 const logger = require('morgan');
 const exphbs = require('express-handlebars');
-const app = express();
-const PORT = 3000;
 const utils = require('./utils.js');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
@@ -14,19 +12,38 @@ const passport = require('passport');
 const Strategy = require('passport-local').Strategy;
 const ensureLogin = require('connect-ensure-login');
 const expsession = require('express-session');
-const saltRounds = 10;
 const bcrypt = require('bcrypt');
-const User = require('./models/User.js');
-const driver = require('./driver');
 const createCSVStringifier = require('csv-writer').createObjectCsvStringifier;
 const createArrayCSVStringifier = require('csv-writer').createArrayCsvStringifier;
-const ArgumentParser = require('argparse').ArgumentParser
+const ArgumentParser = require('argparse').ArgumentParser;
 
+const saltRounds = 10;
+const User = require('./models/User.js');
+const driver = require('./driver');
+const app = express();
+const PORT = 3000;
+
+var parser = new ArgumentParser({
+	version: '0.0.1',
+	addHelp: true,
+	description: 'Camp Algorithm Server'
+})
+parser.addArgument(['-d', '--dev'], {
+	help: "run server in development mode, i.e. use local mongodb database",
+	defaultValue: false,
+	action: 'storeTrue'
+})
+
+var args = parser.parseArgs()
 
 //MongoDB
-dotenv.load()
-mongoose.connect(process.env.MONGODB, { useNewUrlParser: true })
-mongoose.connection.on('error', function(err) {
+if (args.dev) {
+	mongoose.connect('mongodb://localhost/camp-stone', { useNewUrlParser: true })
+} else {
+	dotenv.load()
+	mongoose.connect(process.env.MONGODB, { useNewUrlParser: true })
+}
+mongoose.connection.on('error', function (err) {
 	console.log("Connection to database was unable to take place")
 	process.exit(1);
 });
@@ -34,10 +51,11 @@ mongoose.connection.on('error', function(err) {
 //Handlebars stuff
 var hbs = exphbs.create({
 	helpers: {
-		toLowerCase: function(str) {return str.toLowerCase()},
+		toLowerCase: function (str) { return str.toLowerCase() },
 		stringify: JSON.stringify,
 		length: _.size,
-		titleCase: utils.titleCase},
+		titleCase: utils.titleCase
+	},
 	defaultLayout: 'main',
 	partialsDir: "views/partials/"
 })
@@ -53,14 +71,14 @@ const upperEidot = _.map(lowerEidot, utils.titleCase)
 
 // Set up express-state
 expstate.extend(app);
-app.set("state namespace", 'ctxt'); 
+app.set("state namespace", 'ctxt');
 
 // Set up passport
-passport.use(new Strategy(function(username, password, cb) {
-	User.findOne({username: username}, function(err, user) {
+passport.use(new Strategy(function (username, password, cb) {
+	User.findOne({ username: username }, function (err, user) {
 		if (err) return cb(err);
 		if (!user) return cb(null, false);
-		bcrypt.compare(password, user.pswd, function(err, res) {
+		bcrypt.compare(password, user.pswd, function (err, res) {
 			if (err) return cb(err);
 			if (!res) return cb(null, false);
 			else return cb(null, user);
@@ -68,12 +86,12 @@ passport.use(new Strategy(function(username, password, cb) {
 	})
 }));
 
-passport.serializeUser(function(user, cb) {
+passport.serializeUser(function (user, cb) {
 	cb(null, user._id);
 });
 
-passport.deserializeUser(function(id, cb) {
-	User.findById(id, function(err, user) {
+passport.deserializeUser(function (id, cb) {
+	User.findById(id, function (err, user) {
 		if (err) return cb(err);
 		cb(null, user);
 	})
@@ -86,12 +104,12 @@ app.use(passport.session());
 
 //Chugim
 
-app.get("/", function(req, res) {
+app.get("/", function (req, res) {
 	res.render('home');
 });
 
 // Login
-app.get('/login', function(req, res) {
+app.get('/login', function (req, res) {
 	if (req.user) {
 		return res.redirect('/')
 	}
@@ -100,30 +118,30 @@ app.get('/login', function(req, res) {
 	})
 })
 
-app.post('/login', passport.authenticate('local', {failureRedirect: '/login?fail=true'}), function(req, res) {
+app.post('/login', passport.authenticate('local', { failureRedirect: '/login?fail=true' }), function (req, res) {
 	res.redirect('/chugim/klugie')
 })
 
-app.get('/logout', function(req, res) {
+app.get('/logout', function (req, res) {
 	req.logout();
 	res.redirect('/login');
 })
 
 //Session creation and deletion
-app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function(req, res) {
+app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var session = req.params.id;
 
-	Session.findByIdAndDelete(session, function(err, session) {
+	Session.findByIdAndDelete(session, function (err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a valid session id");
 		res.send("Success");
 	});
 });
 
-app.get("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.find({}, function(err, data) {
+app.get("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.find({}, function (err, data) {
 		if (err) throw err;
-	
+
 		res.expose(_.pluck(data, '_id'), "sessionIDs");
 		res.render('rosh-sports-new', {
 			eidot: upperEidot
@@ -131,10 +149,10 @@ app.get("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), function(req,
 	});
 });
 
-app.get("/chugim/klugie/:id/editsession", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.find({}, function(err, data) {
+app.get("/chugim/klugie/:id/editsession", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.find({}, function (err, data) {
 		if (err) throw err;
-		Session.findById(req.params.id, function(err, session) {
+		Session.findById(req.params.id, function (err, session) {
 			if (err) throw err;
 			if (!session) return res.redirect('/chugim/klugie/newsession');
 
@@ -150,7 +168,7 @@ app.get("/chugim/klugie/:id/editsession", ensureLogin.ensureLoggedIn(), function
 	});
 });
 
-app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async function(req, res) {
+app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async function (req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
 
 	var editing = req.body.editing
@@ -171,17 +189,17 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 	};
 
 	//Some cleaning
-	eidot = _.filter(req.body, function(val, key) {
+	eidot = _.filter(req.body, function (val, key) {
 		return key.includes("eidot");
 	});
-	eidot = _.map(eidot, function(val, ind) {
+	eidot = _.map(eidot, function (val, ind) {
 		if (typeof val == 'string') {
 			return [val]
 		}
 		else return val;
 	})
-	eidot = _.map(eidot, function(arr, ind) {
-		return _.uniq(_.reduce(arr, function(memo, eidah) {
+	eidot = _.map(eidot, function (arr, ind) {
+		return _.uniq(_.reduce(arr, function (memo, eidah) {
 			if (eidah === "all") {
 				return memo.concat(['aleph', 'vav', 'bet', 'gimmel', 'daled']);
 			} else if (eidah === "av") {
@@ -192,7 +210,8 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 				memo.push(eidah);
 				return memo
 			}
-	}, []))});
+		}, []))
+	});
 
 	name = _.flatten([req.body.name])
 	capacity = _.flatten([req.body.capacity])
@@ -210,7 +229,7 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 	}
 
 	newSesh.klugim = klugim_info
-	
+
 	Session.findById(editing, async (err, data) => {
 		if (err) throw err;
 
@@ -225,7 +244,7 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 				newSesh.campers = []
 				for (var kid of data.campers) {
 					pref = kid.prefs.indexOf(kid.chug) // if chug no longer exists that will get taken care of below
-					var newKlug = _.findWhere(newSesh.klugim, {name: kid.chug})
+					var newKlug = _.findWhere(newSesh.klugim, { name: kid.chug })
 					if (newKlug) { // Case: chug kid is placed in exists
 						newSesh.tears[pref] += 1
 						kid.pref_recieved = pref + 1
@@ -239,7 +258,7 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 				}
 			}
 			if (editing !== id) { // Case: new session id for old session record. delete old record, update new record
-				await Session.findByIdAndRemove(editing, function(err, data) {
+				await Session.findByIdAndRemove(editing, function (err, data) {
 					if (err) throw err;
 					newSesh.active = data.active;
 					newSesh.lastProduction = data.lastProduction;
@@ -253,37 +272,37 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 		res.redirect("/chugim/klugie/" + id);
 	})
 
-	
+
 })
 
-app.post("/chugim/klugie/:id/activate", ensureLogin.ensureLoggedIn(), function(req, res){
+app.post("/chugim/klugie/:id/activate", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var id = req.params.id;
-	Session.findById(id, function(err, session) {
+	Session.findById(id, function (err, session) {
 		if (err) throw err;
 
-		Session.findByIdAndUpdate(id, {active: !session.active}, function(err, data) {
+		Session.findByIdAndUpdate(id, { active: !session.active }, function (err, data) {
 			if (err) throw err;
 			if (!data) return res.send("Please send a valid session ID");
 
 			res.send("Success")
 		});
 	})
-	
+
 });
 
 //Rosh Sports Side
-app.get("/chugim/klugie", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.find({}, function(err, sessions) {
+app.get("/chugim/klugie", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.find({}, function (err, sessions) {
 		if (err) throw err;
-		
-		res.render('rosh-sports-select', {sessions: sessions, user: req.user.name});
+
+		res.render('rosh-sports-select', { sessions: sessions, user: req.user.name });
 	});
 });
 
-app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
+app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var sessionID = req.params.id;
 
-	Session.findById(sessionID, function(err, session) {
+	Session.findById(sessionID, function (err, session) {
 		if (err) throw err;
 		if (!session) return res.redirect('/chugim/klugie');
 
@@ -292,7 +311,7 @@ app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 		res.expose(sessionID, "sessionID");
 		res.render('rosh-sports-main', {
 			sessionID: sessionID,
-			prefs: _.sortBy(session.campers, function(elt) {
+			prefs: _.sortBy(session.campers, function (elt) {
 				return lowerEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]
 			}),
 			session: session,
@@ -303,13 +322,15 @@ app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
 	});
 });
 
-app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
+app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var id = req.params.id;
 
-	var update = {'campers.$.eidah': req.body.eidah,
+	var update = {
+		'campers.$.eidah': req.body.eidah,
 		'campers.$.gender': req.body.gender,
 		'campers.$.bunk': req.body.bunk,
-		'campers.$.prefs': req.body.prefs}
+		'campers.$.prefs': req.body.prefs
+	}
 
 	if (req.body.chug) {
 		update['campers.$.chug'] = req.body.chug
@@ -320,7 +341,7 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 		}
 	}
 
-	Session.findOneAndUpdate({_id: id, 'campers.name': req.body.name}, {$set: update, $pull:{noChug:{name:req.body.name}}}, {select: {'campers.$': 1, _id: 0, tears: 1, noChug: 1}}, function(err, data) {
+	Session.findOneAndUpdate({ _id: id, 'campers.name': req.body.name }, { $set: update, $pull: { noChug: { name: req.body.name } } }, { select: { 'campers.$': 1, _id: 0, tears: 1, noChug: 1 } }, function (err, data) {
 		if (err) throw err;
 
 		if (!data) return res.send("Please send valid session ID");
@@ -339,14 +360,14 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 			}
 
 			// original chug
-			Session.findOneAndUpdate({_id: id, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.body.name}}}, {select: {'klugim.$': 1, _id: 0}}, function(err, oldChug) {
+			Session.findOneAndUpdate({ _id: id, 'klugim.name': data.campers[0].chug }, { $pull: { 'klugim.$.kids': { name: req.body.name } } }, { select: { 'klugim.$': 1, _id: 0 } }, function (err, oldChug) {
 				//this is the chreft I get for maintaining two data structures
 				if (err) throw err;
 
 				if (data.campers[0].chug && !oldChug) return res.send("Please send valid session ID");
 				data.campers[0].chug = req.body.chug
 				// new chug
-				Session.findOneAndUpdate({_id: id, 'klugim.name': req.body.chug}, {tears: data.tears, $push:{'klugim.$.kids':data.campers[0]}}, {select: {'klugim.$': 1, _id: 0}}, (err, newChug) => {
+				Session.findOneAndUpdate({ _id: id, 'klugim.name': req.body.chug }, { tears: data.tears, $push: { 'klugim.$.kids': data.campers[0] } }, { select: { 'klugim.$': 1, _id: 0 } }, (err, newChug) => {
 					if (err) throw err;
 
 					if (!newChug) return res.send("Please send valid session ID");
@@ -358,12 +379,12 @@ app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) 
 		}
 
 	});
-	
+
 });
 
-app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res) {
+app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var session = req.params.id;
-	Session.findOneAndUpdate({_id: session, 'campers.name': req.query.camper}, {$pull:{campers:{name:req.query.camper}, noChug:{name:req.query.camper}}}, {select: {'campers.$': 1, _id: 0, tears: 1, lastProduction: 1}}, function(err, data) {
+	Session.findOneAndUpdate({ _id: session, 'campers.name': req.query.camper }, { $pull: { campers: { name: req.query.camper }, noChug: { name: req.query.camper } } }, { select: { 'campers.$': 1, _id: 0, tears: 1, lastProduction: 1 } }, function (err, data) {
 		if (err) throw err;
 		if (!data) return res.send("please send a valid id or camper name");
 
@@ -376,10 +397,10 @@ app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res
 				data.tears[_.indexOf(data.campers[0].prefs, data.campers[0].chug)] -= 1;
 			}
 
-			Session.findOneAndUpdate({_id: session, 'klugim.name': data.campers[0].chug}, {$pull:{'klugim.$.kids':{name:req.query.camper}}}, function(err, data0) {
+			Session.findOneAndUpdate({ _id: session, 'klugim.name': data.campers[0].chug }, { $pull: { 'klugim.$.kids': { name: req.query.camper } } }, function (err, data0) {
 				if (err) throw err;
 
-				Session.findByIdAndUpdate(session, {tears: data.tears}, function(err, data) {
+				Session.findByIdAndUpdate(session, { tears: data.tears }, function (err, data) {
 					if (err) throw err;
 					if (!data) return res.send("please send a valid id");
 
@@ -393,8 +414,8 @@ app.delete("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function(req, res
 });
 
 // Chug list production
-app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.findById(req.params.id, function(err, session) {
+app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.findById(req.params.id, function (err, session) {
 		if (err) throw err;
 		if (!session) return res.send("Please send a session!");
 
@@ -405,19 +426,19 @@ app.post("/chugim/klugie/:id/producelist", ensureLogin.ensureLoggedIn(), functio
 		session.tears = outData.tears;
 		session.lastProduction = new Date();
 
-		Session.findByIdAndUpdate(req.params.id, session, function(err, session) {
+		Session.findByIdAndUpdate(req.params.id, session, function (err, session) {
 			res.send('Success');
 		})
 	})
 })
 
-app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.findById(req.params.id, function(err, session) {
+app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.findById(req.params.id, function (err, session) {
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
 
-		var tempChugim = _.map(session.klugim, function(val) {
-			var kids = _.map(val.kids, (kid) => {return kid.name})
+		var tempChugim = _.map(session.klugim, function (val) {
+			var kids = _.map(val.kids, (kid) => { return kid.name })
 			return [val.name].concat(kids)
 		})
 		tempChugim.push(['No Chug'].concat(_.pluck(session.noChug, 'name')))
@@ -425,55 +446,57 @@ app.get("/chugim/klugie/:id/chuglist", ensureLogin.ensureLoggedIn(), function(re
 		var chugCSV = createArrayCSVStringifier({});
 		var csvString = chugCSV.stringifyRecords(tempChugim);
 
-		res.set({"Content-Disposition":`attachment; filename="Chug List ${session.name}.csv"; `});
-		res.set({"Content-Type":"text/csv"})
+		res.set({ "Content-Disposition": `attachment; filename="Chug List ${session.name}.csv"; ` });
+		res.set({ "Content-Type": "text/csv" })
 		res.send(csvString);
 	})
 })
 
 //TODO: change camper list so that if chug doesn't exist it says so
-app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function(req, res) {
-	Session.findById(req.params.id, function(err, session) {
+app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.findById(req.params.id, function (err, session) {
 		if (err) throw err;
 		if (!session) return res.send('Please send valid session ID');
 
-		var tempCampers = _.sortBy(_.map(session.campers, function(kid) {
+		var tempCampers = _.sortBy(_.map(session.campers, function (kid) {
 			var inChug = ""
-			if ((_.findWhere(session.klugim, {name: kid.chug}))) {
+			if ((_.findWhere(session.klugim, { name: kid.chug }))) {
 				inChug = kid.chug
 			}
-			return {name: kid.name, eidah: utils.titleCase(kid.eidah), gender: utils.titleCase(kid.gender),
+			return {
+				name: kid.name, eidah: utils.titleCase(kid.eidah), gender: utils.titleCase(kid.gender),
 				bunk: kid.bunk, pref1: kid.prefs[0], pref2: kid.prefs[1], pref3: kid.prefs[2],
-				pref_recieved: kid.pref_recieved, chug: inChug};
-		}), function(elt) {
-			return upperEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]; 
+				pref_recieved: kid.pref_recieved, chug: inChug
+			};
+		}), function (elt) {
+			return upperEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1];
 		});
 
 		var camperCSV = createCSVStringifier({
-		    header: [
-		        {id: 'name', title: 'Name'},
-		        {id: 'eidah', title: 'Eidah'},
-		        {id: 'gender', title: 'Gender'},
-		        {id: 'bunk', title: 'Bunk'},
-		        {id: 'pref1', title: 'First Preference'},
-		        {id: 'pref2', title: 'Second Preference'},
-		        {id: 'pref3', title: 'Third Preference'},
-		        {id: 'pref_recieved', title: 'Preference Recieved'},
-		        {id: 'chug', title: 'Chug'}
-		    ]
+			header: [
+				{ id: 'name', title: 'Name' },
+				{ id: 'eidah', title: 'Eidah' },
+				{ id: 'gender', title: 'Gender' },
+				{ id: 'bunk', title: 'Bunk' },
+				{ id: 'pref1', title: 'First Preference' },
+				{ id: 'pref2', title: 'Second Preference' },
+				{ id: 'pref3', title: 'Third Preference' },
+				{ id: 'pref_recieved', title: 'Preference Recieved' },
+				{ id: 'chug', title: 'Chug' }
+			]
 		});
 
 		csvString = camperCSV.getHeaderString() + camperCSV.stringifyRecords(tempCampers);
 
-		res.set({"Content-Disposition":`attachment; filename="Camper List ${session.name}.csv"; `});
-		res.set({"Content-Type":"text/csv"})
+		res.set({ "Content-Disposition": `attachment; filename="Camper List ${session.name}.csv"; ` });
+		res.set({ "Content-Type": "text/csv" })
 		res.send(csvString);
 	})
 })
 
 // Regular Chug form
 function renderChugPage(repeat, req, res) {
-	Session.findOne({_id: req.params.id, active: true}, function(err, session) {
+	Session.findOne({ _id: req.params.id, active: true }, function (err, session) {
 		if (!session) return res.redirect('/chugim');
 
 		res.expose(session.bunks, "bunks");
@@ -489,20 +512,20 @@ function renderChugPage(repeat, req, res) {
 	});
 }
 
-app.get("/chugim", function(req, res) {
-	Session.find({active: true}, function(err, sessions) {
+app.get("/chugim", function (req, res) {
+	Session.find({ active: true }, function (err, sessions) {
 		if (err) throw err;
 
-		res.render('chug-select', {sessions: sessions})
+		res.render('chug-select', { sessions: sessions })
 	});
 });
 
-app.get("/chugim/:id", function(req, res) {
+app.get("/chugim/:id", function (req, res) {
 	renderChugPage(false, req, res);
 });
 
-app.post("/chugim/:id", function(req, res) {
-	Session.findOne({_id: req.params.id, active: true}, function(err, session) {
+app.post("/chugim/:id", function (req, res) {
+	Session.findOne({ _id: req.params.id, active: true }, function (err, session) {
 		if (err) throw err;
 		if (!session) {
 			return res.send("send a valid session id");
@@ -511,34 +534,34 @@ app.post("/chugim/:id", function(req, res) {
 		var update
 		if (session.lastProduction) {
 			camper.pref_recieved = -1
-			update = {$push: {'campers': camper, 'noChug': camper}}
+			update = { $push: { 'campers': camper, 'noChug': camper } }
 			update['tears'] = session.tears
 			update['tears'][3] += 1;
 		} else {
-			update = {$push: {'campers': camper}}
+			update = { $push: { 'campers': camper } }
 		}
-		Session.findOneAndUpdate({_id: req.params.id, active: true}, update, function(err, data) {
+		Session.findOneAndUpdate({ _id: req.params.id, active: true }, update, function (err, data) {
 			if (err) throw err;
 
 			renderChugPage(true, req, res)
 		});
 	})
-	
+
 });
 
 // Other user registration
-app.get('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
-	User.find({}, function(err, users) {
+app.get('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
+	User.find({}, function (err, users) {
 		if (err) throw err;
 
 		res.expose(_.pluck(users, 'username'), 'users');
 		res.render('register');
 	})
-	
+
 })
 
-app.post('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
-	bcrypt.hash(req.body.pswd, saltRounds, function(err, hash) {
+app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
+	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
 		var newUser = new User({
 			name: req.body.name,
 			username: req.body.username,
@@ -550,19 +573,19 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function(req, res) {
 });
 
 // Change Password
-app.post('/changepassword', ensureLogin.ensureLoggedIn(), function(req, res) {
-	bcrypt.hash(req.body.pswd, saltRounds, function(err, hash) {
-		User.findOneAndUpdate({username: req.user.username}, {pswd: hash}, function(data) {
+app.post('/changepassword', ensureLogin.ensureLoggedIn(), function (req, res) {
+	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
+		User.findOneAndUpdate({ username: req.user.username }, { pswd: hash }, function (data) {
 			res.redirect('/chugim/klugie')
 		});
 	});
 });
 
 // API
-app.get('/api/chugim/:id/campers', function(req, res) {
+app.get('/api/chugim/:id/campers', function (req, res) {
 	var id = req.params.id;
 
-	Session.findById(id, function(err, session) {
+	Session.findById(id, function (err, session) {
 		if (err) throw err;
 
 		if (!session) return res.send("please send a valid session id");
@@ -570,11 +593,11 @@ app.get('/api/chugim/:id/campers', function(req, res) {
 	});
 });
 
-app.get('/api/ispassword', ensureLogin.ensureLoggedIn(), function(req, res) {
+app.get('/api/ispassword', ensureLogin.ensureLoggedIn(), function (req, res) {
 	var pswd = req.query.pswd;
 	if (!pswd) return res.send("Please send a password!");
 
-	bcrypt.compare(pswd, req.user.pswd, function(err, ress) {
+	bcrypt.compare(pswd, req.user.pswd, function (err, ress) {
 		if (err) throw err;
 
 		res.json(ress)
@@ -582,11 +605,11 @@ app.get('/api/ispassword', ensureLogin.ensureLoggedIn(), function(req, res) {
 });
 
 // Handle 404
-app.use(function(req, res) {
+app.use(function (req, res) {
 	res.status(404)
 	res.render('404');
 });
 
-app.listen(process.env.PORT || PORT, function() {
-    console.log('Listening!');
+app.listen(process.env.PORT || PORT, function () {
+	console.log('Listening!');
 });
