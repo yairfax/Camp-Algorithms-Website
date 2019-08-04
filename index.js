@@ -3,10 +3,8 @@ const bodyParser = require('body-parser');
 const _ = require("underscore");
 const logger = require('morgan');
 const exphbs = require('express-handlebars');
-const utils = require('./utils.js');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
-const Session = require('./models/Session.js');
 const expstate = require('express-state');
 const passport = require('passport');
 const Strategy = require('passport-local').Strategy;
@@ -16,13 +14,26 @@ const bcrypt = require('bcrypt');
 const createCSVStringifier = require('csv-writer').createObjectCsvStringifier;
 const createArrayCSVStringifier = require('csv-writer').createArrayCsvStringifier;
 const ArgumentParser = require('argparse').ArgumentParser;
+const { exec } = require('child_process')
+const http = require('http-status-codes')
+
+const User = require('./models/User');
+const Session = require('./models/Session');
+const driver = require('./driver');
+const utils = require('./utils');
 
 const saltRounds = 10;
-const User = require('./models/User.js');
-const driver = require('./driver');
-const app = express();
 const PORT = 3000;
+const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
+const upperEidot = _.map(lowerEidot, utils.titleCase)
 
+const app = express();
+
+/**************
+ * middleware *
+ *************/
+
+// command line argsargs
 var parser = new ArgumentParser({
 	version: '0.0.1',
 	addHelp: true,
@@ -33,12 +44,18 @@ parser.addArgument(['-d', '--dev'], {
 	defaultValue: false,
 	action: 'storeTrue'
 })
+parser.addArgument(['-o', '--offline'], {
+	help: "run server in offline mode, i.e. use static copies of stylesheets and script files",
+	defaultValue: false,
+	action: 'storeTrue'
+})
 
 var args = parser.parseArgs()
 
-//MongoDB
+// MongoDB connection
 if (args.dev) {
 	mongoose.connect('mongodb://localhost/camp-stone', { useNewUrlParser: true })
+	exec("open -a Google\\ Chrome http://localhost:3000")
 } else {
 	dotenv.load()
 	mongoose.connect(process.env.MONGODB, { useNewUrlParser: true })
@@ -59,7 +76,7 @@ var hbs = exphbs.create({
 	defaultLayout: 'main',
 	partialsDir: "views/partials/",
 })
-app.locals.devMode = args.dev;
+app.locals.offlineMode = args.offline;
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -72,10 +89,7 @@ app.use(expsession({ secret: 'keyboard cat', resave: false, saveUninitialized: f
 expstate.extend(app);
 app.set("state namespace", 'ctxt');
 
-const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
-const upperEidot = _.map(lowerEidot, utils.titleCase)
-
-// Set up passport
+// Set up passport authentication
 passport.use(new Strategy(function (username, password, cb) {
 	User.findOne({ username: username }, function (err, user) {
 		if (err) return cb(err);
@@ -102,10 +116,11 @@ passport.deserializeUser(function (id, cb) {
 app.use(passport.initialize());
 app.use(passport.session());
 
-//Server
+/**********
+ * SERVER *
+ *********/
 
-//Chugim
-
+//Home
 app.get("/", function (req, res) {
 	res.render('home');
 });
@@ -119,15 +134,41 @@ app.get('/login', function (req, res) {
 		fail: req.query.fail === 'true'
 	})
 })
-
 app.post('/login', passport.authenticate('local', { failureRedirect: '/login?fail=true' }), function (req, res) {
 	res.redirect('/chugim/klugie')
 })
-
 app.get('/logout', function (req, res) {
 	req.logout();
 	res.redirect('/login');
 })
+app.get('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
+	User.find({}, function (err, users) {
+		if (err) throw err;
+
+		res.expose(_.pluck(users, 'username'), 'users');
+		res.render('register');
+	})
+})
+app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
+	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
+		var newUser = new User({
+			name: req.body.name,
+			username: req.body.username,
+			pswd: hash
+		});
+		newUser.save();
+		res.redirect('/chugim/klugie')
+	});
+});
+
+// Change Password
+app.post('/changepassword', ensureLogin.ensureLoggedIn(), function (req, res) {
+	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
+		User.findOneAndUpdate({ username: req.user.username }, { pswd: hash }, function (data) {
+			res.redirect('/chugim/klugie')
+		});
+	});
+});
 
 //Session creation and deletion
 app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function (req, res) {
@@ -135,14 +176,17 @@ app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function (
 
 	Session.findByIdAndDelete(session, function (err, session) {
 		if (err) throw err;
-		if (!session) return res.send("Please send a valid session id");
+		if (!session) {
+			res.status(http.NOT_FOUND);
+			return res.send("Please send a valid session id");
+		}
 		res.send("Success");
 	});
 });
 
 app.get("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), function (req, res) {
 	Session.find({}, function (err, data) {
-		if (err) throw err;
+		if (err) utils.sendError(res, http.INTERNAL_SERVER_ERROR, err)
 
 		res.expose(_.pluck(data, '_id'), "sessionIDs");
 		res.render('rosh-sports-new', {
@@ -273,8 +317,6 @@ app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async functi
 		}
 		res.redirect("/chugim/klugie/" + id);
 	})
-
-
 })
 
 app.post("/chugim/klugie/:id/activate", ensureLogin.ensureLoggedIn(), function (req, res) {
@@ -549,38 +591,6 @@ app.post("/chugim/:id", function (req, res) {
 		});
 	})
 
-});
-
-// Other user registration
-app.get('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
-	User.find({}, function (err, users) {
-		if (err) throw err;
-
-		res.expose(_.pluck(users, 'username'), 'users');
-		res.render('register');
-	})
-
-})
-
-app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
-	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
-		var newUser = new User({
-			name: req.body.name,
-			username: req.body.username,
-			pswd: hash
-		});
-		newUser.save();
-		res.redirect('/chugim/klugie')
-	});
-});
-
-// Change Password
-app.post('/changepassword', ensureLogin.ensureLoggedIn(), function (req, res) {
-	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
-		User.findOneAndUpdate({ username: req.user.username }, { pswd: hash }, function (data) {
-			res.redirect('/chugim/klugie')
-		});
-	});
 });
 
 // API

@@ -12,10 +12,10 @@ function getChugim(obj) {
 	}
 
 	// For each chug, calculate eidot with that chug and put into that array in the object
-	_.each(chugim, function(arr, eidah) {
-		var filtered = _.filter(obj.klugim, function(elt) {
+	_.each(chugim, function (arr, eidah) {
+		var filtered = _.filter(obj.klugim, function (elt) {
 			return (elt.eidot.includes(eidah));
-		}) 
+		})
 		chugim[eidah] = _.pluck(filtered, 'name')
 	})
 	return chugim
@@ -23,20 +23,26 @@ function getChugim(obj) {
 
 
 function titleCase(str) {
-	return str.split(' ').map(function(word) {
+	return str.split(' ').map(function (word) {
 		if (word == "bbq") return word.toUpperCase();
 		else if (word == "and" || word == "or" || word == "for" || word == "of" || word == "on") return word;
 		else return capitalize(word);
 	}).join(' ');
 }
 
-function callbackErr (err) {
+function callbackErr(err) {
 	if (err) throw err;
+}
+
+function sendError(res, code, msg) {
+	res.status(code)
+	res.send(msg)
 }
 
 module.exports = {
 	getChugim: getChugim,
 	titleCase: titleCase,
-	callbackErr: callbackErr
+	callbackErr: callbackErr,
+	sendError: sendError
 }
 
