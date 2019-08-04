@@ -143,7 +143,7 @@ app.get('/logout', function (req, res) {
 })
 app.get('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
 	User.find({}, function (err, users) {
-		if (err) throw err;
+		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err)
 
 		res.expose(_.pluck(users, 'username'), 'users');
 		res.render('register');
@@ -157,7 +157,7 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
 			pswd: hash
 		});
 		newUser.save();
-		res.redirect('/chugim/klugie')
+		res.redirect('/chugim/klugie');
 	});
 });
 
@@ -165,56 +165,50 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
 app.post('/changepassword', ensureLogin.ensureLoggedIn(), function (req, res) {
 	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
 		User.findOneAndUpdate({ username: req.user.username }, { pswd: hash }, function (data) {
-			res.redirect('/chugim/klugie')
+			res.redirect('/chugim/klugie');
 		});
 	});
 });
 
 //Session creation and deletion
-app.delete("/chugim/klugie/:id/delete", ensureLogin.ensureLoggedIn(), function (req, res) {
+app.delete("/chugim/klugie/session/:id/delete", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var session = req.params.id;
 
 	Session.findByIdAndDelete(session, function (err, session) {
-		if (err) throw err;
+		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err);
+
 		if (!session) {
 			res.status(http.NOT_FOUND);
 			return res.send("Please send a valid session id");
 		}
+
 		res.send("Success");
 	});
 });
 
-app.get("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), function (req, res) {
-	Session.find({}, function (err, data) {
-		if (err) utils.sendError(res, http.INTERNAL_SERVER_ERROR, err)
+app.get("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), function (req, res) {
+	res.render('new-session', {
+		eidot: upperEidot
+	})
+});
 
-		res.expose(_.pluck(data, '_id'), "sessionIDs");
+app.get("/chugim/klugie/session/:id/edit", ensureLogin.ensureLoggedIn(), function (req, res) {
+	Session.findById(req.params.id, function (err, session) {
+		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err);
+		if (!session) return res.redirect('/chugim/klugie/session/new');
+
+		res.expose(_.pluck(data, '_id'), "sessionIDs")
+		res.expose(true, "editing");
+		res.expose(session, "session");
+		res.expose(upperEidot, "eidot");
+		res.expose(session.klugim, "chugim");
 		res.render('rosh-sports-new', {
 			eidot: upperEidot
 		});
 	});
 });
 
-app.get("/chugim/klugie/:id/editsession", ensureLogin.ensureLoggedIn(), function (req, res) {
-	Session.find({}, function (err, data) {
-		if (err) throw err;
-		Session.findById(req.params.id, function (err, session) {
-			if (err) throw err;
-			if (!session) return res.redirect('/chugim/klugie/newsession');
-
-			res.expose(_.pluck(data, '_id'), "sessionIDs")
-			res.expose(true, "editing");
-			res.expose(session, "session");
-			res.expose(upperEidot, "eidot");
-			res.expose(session.klugim, "chugim");
-			res.render('rosh-sports-new', {
-				eidot: upperEidot
-			});
-		});
-	});
-});
-
-app.post("/chugim/klugie/newsession", ensureLogin.ensureLoggedIn(), async function (req, res) {
+app.post("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), async function (req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
 
 	var editing = req.body.editing
