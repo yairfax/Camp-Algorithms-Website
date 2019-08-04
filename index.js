@@ -142,12 +142,7 @@ app.get('/logout', function (req, res) {
 	res.redirect('/login');
 })
 app.get('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
-	User.find({}, function (err, users) {
-		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err)
-
-		res.expose(_.pluck(users, 'username'), 'users');
-		res.render('register');
-	})
+	res.render('register');
 })
 app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
 	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
@@ -156,8 +151,11 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
 			username: req.body.username,
 			pswd: hash
 		});
-		newUser.save();
-		res.redirect('/chugim/klugie');
+		newUser.save(err => {
+			if (err) return utils.sendError(res, http.BAD_REQUEST, err.message)
+
+			res.redirect('/chugim/klugie');
+		});
 	});
 });
 

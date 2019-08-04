@@ -4,9 +4,20 @@ var userSchema = new mongoose.Schema({
 	pswd: {
 		type: String,
 		required: true
-	}, 
+	},
 	username: {
 		type: String,
+		validate: {
+			isAsync: true,
+			validator: function (v, cb) {
+				User.findOne({ username: v }, (err, doc) => {
+					if (err) return cb(err)
+
+					cb(!doc)
+				})
+			},
+			message: "username already exists"
+		},
 		required: true
 	},
 	name: {
