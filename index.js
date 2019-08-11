@@ -82,7 +82,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
-app.use('/static', express.static('public'));
+app.use('/static', express.static('static'));
+app.use('/js', express.static('client-js'));
 app.use(expsession({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
 
 // Set up express-state
@@ -154,7 +155,7 @@ app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
 		newUser.save(err => {
 			if (err) return utils.sendError(res, http.BAD_REQUEST, err.message)
 
-			res.redirect('/chugim/klugie');
+			res.send('success')
 		});
 	});
 });
