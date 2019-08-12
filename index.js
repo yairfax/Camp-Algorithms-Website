@@ -81,6 +81,19 @@ app.locals.offlineMode = args.offline;
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+function sessionMiddleware(req, res, next) {
+	if (req.params.id === "session" || req.params.id === "new") return next()
+	Session.findOne({ id: req.params.id }, (err, doc) => {
+		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err.message)
+
+		if (!doc) return utils.sendError(res, http.BAD_REQUEST, "no session found with that id")
+
+		req.currentSession = doc
+		next()
+	})
+}
+app.use("/chugim/klugie/:id", sessionMiddleware)
+app.use("/chugim/klugie/session/:id", sessionMiddleware)
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/static', express.static('static'));
@@ -206,42 +219,35 @@ app.post('/changepassword',
  ************/
 
 //Session creation and deletion
-app.get("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), function (req, res) {
-	res.render('new-session', {
-		eidot: upperEidot
-	})
-});
-
-app.delete("/chugim/klugie/session/:id/delete", ensureLogin.ensureLoggedIn(), function (req, res) {
-	var session = req.params.id;
-
-	Session.findByIdAndDelete(session, function (err, session) {
-		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err);
-
-		if (!session) {
-			res.status(http.NOT_FOUND);
-			return res.send("Please send a valid session id");
-		}
-
-		res.send("Success");
+app.get("/chugim/klugie/session/new",
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		res.render('new-session', {
+			eidot: upperEidot
+		})
 	});
-});
 
-app.get("/chugim/klugie/session/:id/edit", ensureLogin.ensureLoggedIn(), function (req, res) {
-	Session.findById(req.params.id, function (err, session) {
-		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err);
-		if (!session) return res.redirect('/chugim/klugie/session/new');
+app.delete("/chugim/klugie/session/:id/delete",
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		Session.findByIdAndDelete(req.currentSession._id, function (err, session) {
+			if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err);
 
-		res.expose(_.pluck(data, '_id'), "sessionIDs")
-		res.expose(true, "editing");
-		res.expose(session, "session");
+			res.send("success");
+		});
+	});
+
+app.get("/chugim/klugie/session/:id/edit",
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		var session = req.currentSession
+
 		res.expose(upperEidot, "eidot");
 		res.expose(session.klugim, "chugim");
-		res.render('rosh-sports-new', {
+		res.render('new-session', {
 			eidot: upperEidot
 		});
 	});
-});
 
 app.post("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), async function (req, res) {
 	var id = (req.body.year - 2000) + req.body.session;
