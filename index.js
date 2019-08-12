@@ -64,6 +64,7 @@ mongoose.connection.on('error', function (err) {
 	console.log("Connection to database was unable to take place")
 	process.exit(1);
 });
+mongoose.set('useFindAndModify', false)
 
 //Handlebars stuff
 var hbs = exphbs.create({
@@ -119,57 +120,91 @@ app.use(passport.session());
 
 /**********
  * SERVER *
- *********/
+ **********/
 
 //Home
-app.get("/", function (req, res) {
-	res.render('home');
-});
+app.get("/",
+	function (req, res) {
+		res.render('home');
+	});
 
 // Login
-app.get('/login', function (req, res) {
-	if (req.user) {
-		return res.redirect('/')
-	}
-	res.render('login', {
-		fail: req.query.fail === 'true'
+app.get('/login',
+	function (req, res) {
+		if (req.user) {
+			return res.redirect('/')
+		}
+		res.render('login', {
+			fail: req.query.fail === 'true'
+		})
 	})
-})
-app.post('/login', passport.authenticate('local', { failureRedirect: '/login?fail=true' }), function (req, res) {
-	res.redirect('/chugim/klugie')
-})
-app.get('/logout', function (req, res) {
-	req.logout();
-	res.redirect('/login');
-})
-app.get('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
-	res.render('register');
-})
-app.post('/register', ensureLogin.ensureLoggedIn(), function (req, res) {
-	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
-		var newUser = new User({
-			name: req.body.name,
-			username: req.body.username,
-			pswd: hash
-		});
-		newUser.save(err => {
+
+app.post('/login',
+	passport.authenticate('local', { failureRedirect: '/login?fail=true' }),
+	function (req, res) {
+		res.redirect('/chugim/klugie')
+	})
+
+app.get('/logout',
+	function (req, res) {
+		req.logout();
+		res.redirect('/login');
+	})
+
+app.get('/register',
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		res.render('register');
+	})
+
+app.post('/register',
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
 			if (err) return utils.sendError(res, http.BAD_REQUEST, err.message)
 
-			res.send('success')
+			var newUser = new User({
+				name: req.body.name,
+				username: req.body.username,
+				pswd: hash
+			});
+			newUser.save(err => {
+				if (err) return utils.sendError(res, http.BAD_REQUEST, err.message)
+
+				res.send('success')
+			});
 		});
 	});
-});
 
 // Change Password
-app.post('/changepassword', ensureLogin.ensureLoggedIn(), function (req, res) {
-	bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
-		User.findOneAndUpdate({ username: req.user.username }, { pswd: hash }, function (data) {
-			res.redirect('/chugim/klugie');
+app.post('/changepassword',
+	ensureLogin.ensureLoggedIn(),
+	function (req, res, next) {
+		bcrypt.compare(req.body.currPass, req.user.pswd, (err, same) => {
+			if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err.message)
+
+			if (!same) return utils.sendError(res, http.BAD_REQUEST, "wrong password")
+
+			next()
+		})
+	},
+	function (req, res) {
+		bcrypt.hash(req.body.pswd, saltRounds, function (err, hash) {
+			if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err.message)
+
+			User.findByIdAndUpdate(req.user.id, { pswd: hash }, () => {
+				res.redirect('/chugim/klugie');
+			});
 		});
 	});
-});
 
 //Session creation and deletion
+app.get("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), function (req, res) {
+	res.render('new-session', {
+		eidot: upperEidot
+	})
+});
+
 app.delete("/chugim/klugie/session/:id/delete", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var session = req.params.id;
 
@@ -183,12 +218,6 @@ app.delete("/chugim/klugie/session/:id/delete", ensureLogin.ensureLoggedIn(), fu
 
 		res.send("Success");
 	});
-});
-
-app.get("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), function (req, res) {
-	res.render('new-session', {
-		eidot: upperEidot
-	})
 });
 
 app.get("/chugim/klugie/session/:id/edit", ensureLogin.ensureLoggedIn(), function (req, res) {

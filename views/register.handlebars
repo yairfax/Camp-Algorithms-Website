@@ -17,4 +17,11 @@
 	<button class="btn btn-primary btn-submit" type="button" id="register-submit">Submit</button>
 </form>
 
-<script src="/js/register.js"></script>
+<script>
+	registerForm({
+        form: "#register-form",
+        url: "/register",
+        redirect: "/chugim/klugie",
+        error: data => data.responseText.includes("username already exists") ? $("#username").addClass('is-invalid') : alert(data.responseText)
+    })
+</script>
