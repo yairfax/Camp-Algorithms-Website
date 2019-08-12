@@ -1,7 +1,7 @@
 <title>Rosh Sports Portal: Edit Session</title>
 <h1>Enter Session Information</h1>
 <p><b>NOTE:</b> To edit an existing session, navigate to Edit Session from that session's page.</p>
-<form id="new-sesh-form" method="POST" action="/chugim/klugie/newsession">
+<form id="new-session-form">
 	<!--Year and session-->
 	<div class="form-row">
 		<div class="form-group col-md-3">
@@ -27,16 +27,16 @@
 		<div class="col-md-2" style="text-align: center">
 			<label>{{this}}</label>
 			<div class="form-group">
-				<input class="form-control {{this}}" type="text" name="{{this}}" required>
+				<input class="form-control {{this}}" type="text" name="{{this}}">
 			</div>
 			<div class="form-group">
-				<input class="form-control {{this}}" type="text" name="{{this}}" required>
+				<input class="form-control {{this}}" type="text" name="{{this}}">
 			</div>
 			<div class="form-group">
-				<input class="form-control {{this}}" type="text" name="{{this}}" required>
+				<input class="form-control {{this}}" type="text" name="{{this}}">
 			</div>
 			<div class="form-group">
-				<input class="form-control {{this}}" type="text" name="{{this}}" required>
+				<input class="form-control {{this}}" type="text" name="{{this}}">
 			</div>
 		</div>
 		{{/each}}
@@ -56,22 +56,20 @@
 </form>
 
 <script>
-	var chugNum = 0;
-	var rules = {};
-
 	// creates new chug div
 	function getNewChug() {
 		var chugAdd = $("<div>")
-		var temp = `<div class="form-row">
+		var temp = `
+		<div class="form-row">
 			<div class="form-group col-md-5">
-				<input class="form-control" id="name" type="text" placeholder="Chug Name" name="name" required></input>
+				<input class="form-control" id="name" type="text" placeholder="Chug Name" required></input>
 				<div class="invalid-feedback">Please select eidot for this chug</div>
 			</div>
 			<div class="form-group col-md-2">
-				<input class="form-control" id="pop" type="number" step=".1" min="0" max="1" name="popularity" placeholder="Popularity" required></input>
+				<input class="form-control" id="pop" type="number" step=".1" min="0" max="1" placeholder="Popularity" required></input>
 			</div>
 			<div class="form-group col-md-2">
-				<input class="form-control" id="cap" type="number" min="0" max="100" name="capacity" placeholder="Capacity" required></input>
+				<input class="form-control" id="cap" type="number" min="0" max="100" placeholder="Capacity" required></input>
 			</div>
 			<button type="button" id="delete" class="btn btn-danger delete-chug" style="height: 37px">-</button>
 		</div>
@@ -79,13 +77,12 @@
 			<div class="form-group">`
 		for (var eidah of ["Aleph", "Vav", "Bet", "Gimmel", "Daled", "AV", "BGD", "All"]) {
 			temp += `<div class="form-check form-check-inline">
-							<input class="form-check-input eidot${chugNum}" type="checkbox" name="eidot[${chugNum}]" value="${eidah.toLowerCase()}">
+							<input class="form-check-input eidot" type="checkbox" value="${eidah.toLowerCase()}">
 							<label class="form-check-label" for="${eidah.toLowerCase()}">${eidah}</label>
 						</div>`
 		}
 		temp += `</div></div><hr>`;
 
-		chugNum++;
 		chugAdd.append(temp)
 		return chugAdd;
 	}
@@ -95,7 +92,7 @@
 		$("#chug-container").append(newChug);
 		$(".delete-chug").on("click", function(event) {
 			// Double parent for both rows. outer div tag makes sure it only removes this elt
-			$(this).parent().parent().remove();
+			$(this).parentsUntil("#chug-container").remove();
 		});
 	}
 
@@ -104,67 +101,37 @@
 		addChug(getNewChug());
 	});
 
-	if (ctxt.editing) {
-		// Load in session data
-		$("#year").val(ctxt.session.year);
-		$(`input[value=${ctxt.session.session}]`).prop('checked', true)
-		for (var i of ctxt.eidot) {
-			var arr = $(`.${i}`);
-			for (var j in arr) {
-				arr[j].value = ctxt.session.bunks[i.toLowerCase()][j]
-			}
-		}
-
-		// Populate Chug list
-		for (var chug of ctxt.chugim) {
-			var temp = getNewChug();
-			temp.find("#name").val(chug.name);
-			temp.find("#cap").val(chug.capacity);
-			temp.find("#pop").val(chug.popularity);
-
-			for (var eidah of chug.eidot) {
-				temp.find(`input[value=${eidah}]`).prop('checked', true);
-			}
-			addChug(temp);
-		}
-
-		$("#edit").val(ctxt.session._id);
-	}
-
-	$("#new-sesh-form").on("submit", function(event) {
-		var id = ($("#year").val() - 2000) + $(".session:checked").val()
-		// If session already exists and is not editing session
-		if (ctxt.sessionIDs.includes(id) && id !== $("#edit").val()) {
-			$("#year").addClass('is-invalid')
-			$("#year").focus();
-
-			$("#year,.session").on('click', function() {
-				$("#year").removeClass('is-invalid');
+	$("#new-session-form").submit((e) => {
+		e.preventDefault()
+		data = {
+			year: parseInt($("#year").val()),
+			session: $("input[name=\"session\"]").val(),
+			bunks: _.reduce(ctxt.eidot, (memo, eidah) => {
+				memo[eidah] = _.map($(`.${eidah}`), ele => ele.value)
+				return memo
+			}, {}),
+			chugim: _.map($("#chug-container").contents(), chug => {
+				return {
+					name: $(chug).find("#name").val(),
+					popularity: parseFloat($(chug).find("#pop").val()),
+					capacity: parseInt($(chug).find("#cap").val()),
+					eidot: _.uniq(_.reduce($(chug).find("input.eidot:checked"), (memo, eidah) => {
+						switch (eidah.value) {
+							case "bgd":
+								return memo.concat(["bet", "gimmel", "daled"])
+							case "av":
+								return memo.concat(["aleph", "vav"])
+							case "all":
+								return memo.concat(["aleph", "vav", "bet", "gimmel", "daled"])
+							default:
+								return memo.concat([eidah.value])
+						}
+					}, []))
+				}
 			})
-			return false;
-		}
-
-		// Check if any chugim have been added
-		if($("#chug-container").is(":empty")) {
-			alert("Please add chugim")
-			return false;
-		}
-
-		// If chug exists but no eidot have been checked
-		for (var i = 0; i < chugNum; i++) {
-			if ($(`.eidot${i}`).length && !$(`.eidot${i}:checked`).length) {
-				
-				var cont = $(`.eidot${i}`).parent().parent().parent().parent().find("#name")
-				cont.addClass('is-invalid')
-				cont.focus();
-
-				$(`.eidot${i}`).on('click', function() {
-					cont.removeClass('is-invalid')
-				})
-				return false;
-			}
+			// functional programming ftw
 		}
 
 		
-	});
+	})
 </script>

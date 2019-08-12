@@ -222,6 +222,7 @@ app.post('/changepassword',
 app.get("/chugim/klugie/session/new",
 	ensureLogin.ensureLoggedIn(),
 	function (req, res) {
+		res.expose(upperEidot, "eidot")
 		res.render('new-session', {
 			eidot: upperEidot
 		})

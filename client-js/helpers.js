@@ -7,7 +7,8 @@
 }
 */
 function registerForm(options) {
-    $(".btn-submit").click(() => {
+    $(options.form).submit((e) => {
+        e.preventDefault()
         var data = $(options.form).serializeArray()
 
         data = _.indexBy(data, 'name')
