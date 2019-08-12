@@ -122,6 +122,9 @@ app.use(passport.session());
  * SERVER *
  **********/
 
+/**************
+ * User admin *
+ **************/
 //Home
 app.get("/",
 	function (req, res) {
@@ -197,6 +200,10 @@ app.post('/changepassword',
 			});
 		});
 	});
+
+/************
+ * Sessions *
+ ************/
 
 //Session creation and deletion
 app.get("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), function (req, res) {
