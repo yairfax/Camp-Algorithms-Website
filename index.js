@@ -232,7 +232,7 @@ app.delete("/chugim/klugie/session/:id/delete",
 	ensureLogin.ensureLoggedIn(),
 	function (req, res) {
 		Session.findByIdAndDelete(req.currentSession._id, function (err, session) {
-			if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err);
+			if (err) return res.status(http.INTERNAL_SERVER_ERROR).send(err);
 
 			res.send("success");
 		});
@@ -241,7 +241,7 @@ app.delete("/chugim/klugie/session/:id/delete",
 app.get("/chugim/klugie/session/:id/edit",
 	ensureLogin.ensureLoggedIn(),
 	function (req, res) {
-		var session = req.currentSession
+		var session = req.currentSession;
 
 		res.expose(upperEidot, "eidot");
 		res.expose(session.klugim, "chugim");
@@ -250,125 +250,35 @@ app.get("/chugim/klugie/session/:id/edit",
 		});
 	});
 
-app.post("/chugim/klugie/session/new", ensureLogin.ensureLoggedIn(), async function (req, res) {
-	var id = (req.body.year - 2000) + req.body.session;
+app.post("/chugim/klugie/session/new",
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		session = req.body;
+		session.id = (session.year - 2000) + session.session;
+		session.active = false;
+		session.name = session.year + " " + session.session.toUpperCase();
 
-	var editing = req.body.editing
+		(new Session(session)).save((err, doc) => {
+			if (err) return res.status(http.BAD_REQUEST).send(err.message);
 
-	// Session file writing
-	var newSesh = {
-		_id: id,
-		name: req.body.year + " " + req.body.session.toUpperCase(),
-		year: parseInt(req.body.year),
-		session: req.body.session,
-		bunks: {
-			aleph: req.body.Aleph,
-			vav: req.body.Vav,
-			bet: req.body.Bet,
-			gimmel: req.body.Gimmel,
-			daled: req.body.Daled
-		}
-	};
-
-	//Some cleaning
-	eidot = _.filter(req.body, function (val, key) {
-		return key.includes("eidot");
-	});
-	eidot = _.map(eidot, function (val, ind) {
-		if (typeof val == 'string') {
-			return [val]
-		}
-		else return val;
-	})
-	eidot = _.map(eidot, function (arr, ind) {
-		return _.uniq(_.reduce(arr, function (memo, eidah) {
-			if (eidah === "all") {
-				return memo.concat(['aleph', 'vav', 'bet', 'gimmel', 'daled']);
-			} else if (eidah === "av") {
-				return memo.concat(['aleph', 'vav']);
-			} else if (eidah === "bgd") {
-				return memo.concat(['bet', 'gimmel', 'daled'])
-			} else {
-				memo.push(eidah);
-				return memo
-			}
-		}, []))
-	});
-
-	name = _.flatten([req.body.name])
-	capacity = _.flatten([req.body.capacity])
-	popularity = _.flatten([req.body.popularity])
-
-	var klugim_info = []
-	for (i in name) {
-		klugim_info.push({
-			name: name[i],
-			capacity: parseInt(capacity[i]),
-			popularity: parseFloat(popularity[i]),
-			eidot: eidot[i],
-			kids: []
+			res.send(session.id);
 		})
-	}
-
-	newSesh.klugim = klugim_info
-
-	Session.findById(editing, async (err, data) => {
-		if (err) throw err;
-
-		if (!data) { // Case: session didn't exist before
-			newSesh.active = false;
-			var addSesh = new Session(newSesh)
-			await addSesh.save(utils.callbackErr)
-		} else { // Case: session did exist before
-			if (data.lastProduction) { // Case: previous session data already had chug production
-				newSesh.tears = [0, 0, 0, 0]
-				newSesh.noChug = []
-				newSesh.campers = []
-				for (var kid of data.campers) {
-					pref = kid.prefs.indexOf(kid.chug) // if chug no longer exists that will get taken care of below
-					var newKlug = _.findWhere(newSesh.klugim, { name: kid.chug })
-					if (newKlug) { // Case: chug kid is placed in exists
-						newSesh.tears[pref] += 1
-						kid.pref_recieved = pref + 1
-						newKlug.kids.push(kid)
-					} else { // Case: chug kid is placed in doesn't exist anymore
-						newSesh.tears[3] += 1
-						kid.pref_recieved = -1
-						newSesh.noChug.push(kid)
-					}
-					newSesh.campers.push(kid)
-				}
-			}
-			if (editing !== id) { // Case: new session id for old session record. delete old record, update new record
-				await Session.findByIdAndRemove(editing, function (err, data) {
-					if (err) throw err;
-					newSesh.active = data.active;
-					newSesh.lastProduction = data.lastProduction;
-					addSesh = new Session(newSesh);
-					addSesh.save(utils.callbackErr);
-				})
-			} else { // Case: old session id, just use update
-				await Session.findByIdAndUpdate(id, newSesh, utils.callbackErr)
-			}
-		}
-		res.redirect("/chugim/klugie/" + id);
 	})
-})
 
-app.post("/chugim/klugie/:id/activate", ensureLogin.ensureLoggedIn(), function (req, res) {
-	var id = req.params.id;
-	Session.findById(id, function (err, session) {
-		if (err) throw err;
 
-		Session.findByIdAndUpdate(id, { active: !session.active }, function (err, data) {
-			if (err) throw err;
-			if (!data) return res.send("Please send a valid session ID");
+app.post("/chugim/klugie/:id/activate",
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		var session = req.currentSession;
 
-			res.send("Success")
+		Session.findByIdAndUpdate(session._id, { active: !session.active }, function (err, data) {
+			if (err) return res.status(http.INTERNAL_SERVER_ERROR).send(err.message);
+
+			if (!data) return res.status(http.BAD_REQUEST).send("please send a valid session ID");
+
+			res.send("success");
 		});
-	})
-
-});
+	});
 
 //Rosh Sports Side
 app.get("/chugim/klugie", ensureLogin.ensureLoggedIn(), function (req, res) {

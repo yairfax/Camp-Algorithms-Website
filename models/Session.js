@@ -53,6 +53,20 @@ var klugSchema = new mongoose.Schema({
 })
 
 var sessionSchema = new mongoose.Schema({
+	id: {
+		type: String,
+		required: true,
+		validate: {
+			isAsync: true,
+			validator: function (v, cb) {
+				Session.findOne({ id: v }, (err, doc) => {
+					if (err) return cb(err)
+
+					cb(!doc, "session already exists")
+				})
+			}
+		}
+	},
 	name: {
 		type: String,
 		required: true

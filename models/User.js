@@ -13,10 +13,9 @@ var userSchema = new mongoose.Schema({
 				User.findOne({ username: v }, (err, doc) => {
 					if (err) return cb(err)
 
-					cb(!doc)
+					cb(!doc, "username already exists")
 				})
-			},
-			message: "username already exists"
+			}
 		},
 		required: true
 	},
