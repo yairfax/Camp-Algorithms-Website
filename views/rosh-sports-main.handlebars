@@ -117,7 +117,7 @@
 					<th>Eidot</th>
 				</tr>
 			</thead>
-			{{#each session.klugim}}
+			{{#each session.chugim}}
 			<tr class="trow" {{#if this.kids}}data-toggle="modal" data-target="#chugModal" {{/if}}>
 				<td>{{this.name}}</td>
 				<td>{{this.capacity}}</td>
@@ -400,8 +400,8 @@
 
 	//Activation
 	$("#activate").on('click', function () {
-		$.post(`/chugim/klugie/${ctxt.session._id}/activate`, function (data) {
-			if (data === "Success") window.location.reload();
+		$.post(`/chugim/klugie/session/${ctxt.session.id}/activate`, () => {
+			window.location.reload();
 		})
 	});
 

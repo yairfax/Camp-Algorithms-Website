@@ -266,15 +266,13 @@ app.post("/chugim/klugie/session/new",
 	})
 
 
-app.post("/chugim/klugie/:id/activate",
+app.post("/chugim/klugie/session/:id/activate",
 	ensureLogin.ensureLoggedIn(),
 	function (req, res) {
 		var session = req.currentSession;
 
-		Session.findByIdAndUpdate(session._id, { active: !session.active }, function (err, data) {
+		Session.findByIdAndUpdate(session._id, { active: !session.active }, err => {
 			if (err) return res.status(http.INTERNAL_SERVER_ERROR).send(err.message);
-
-			if (!data) return res.status(http.BAD_REQUEST).send("please send a valid session ID");
 
 			res.send("success");
 		});
@@ -291,26 +289,25 @@ app.get("/chugim/klugie",
 		});
 	});
 
-app.get("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function (req, res) {
-	session = req.currentSession;
+app.get("/chugim/klugie/:id",
+	ensureLogin.ensureLoggedIn(),
+	function (req, res) {
+		session = req.currentSession;
 
-	if (err) throw err;
-	if (!session) return res.redirect('/chugim/klugie');
-
-	res.expose(session, "session");
-	res.expose(utils.getChugim(session), "chugim");
-	res.expose(sessionID, "sessionID");
-	res.render('rosh-sports-main', {
-		sessionID: sessionID,
-		prefs: _.sortBy(session.campers, function (elt) {
-			return lowerEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]
-		}),
-		session: session,
-		eidot: upperEidot,
-		counter: [1, 2, 3],
-		areCampers: !(_.isEmpty(session.campers))
+		res.expose(session, "session");
+		res.expose(utils.getChugim(session), "chugim");
+		res.expose(session.id, "sessionID");
+		res.render('rosh-sports-main', {
+			sessionID: session.id,
+			prefs: _.sortBy(session.campers, function (elt) {
+				return lowerEidot.indexOf(elt.eidah) + elt.gender + elt.bunk + elt.name.split(/ +/)[1]
+			}),
+			session: session,
+			eidot: upperEidot,
+			counter: [1, 2, 3],
+			areCampers: !(_.isEmpty(session.campers))
+		});
 	});
-});
 
 app.post("/chugim/klugie/:id", ensureLogin.ensureLoggedIn(), function (req, res) {
 	var id = req.params.id;

@@ -27,7 +27,7 @@ var camperSchema = new mongoose.Schema({
 	pref_recieved: Number
 })
 
-var klugSchema = new mongoose.Schema({
+var chugSchema = new mongoose.Schema({
 	name: {
 		type: String,
 		required: true
@@ -91,7 +91,7 @@ var sessionSchema = new mongoose.Schema({
 		type: Boolean,
 		required: true
 	},
-	klugim: [klugSchema],
+	chugim: [chugSchema],
 	campers: [camperSchema],
 	lastProduction: Date,
 	tears: [Number],
