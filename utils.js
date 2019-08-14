@@ -2,23 +2,12 @@ var fs = require('fs')
 var _ = require('underscore');
 var capitalize = require('capitalize');
 
-function getChugim(obj) {
-	var chugim = {
-		aleph: [],
-		vav: [],
-		bet: [],
-		gimmel: [],
-		daled: []
-	}
-
+function getChugim(session) {
 	// For each chug, calculate eidot with that chug and put into that array in the object
-	_.each(chugim, function (arr, eidah) {
-		var filtered = _.filter(obj.klugim, function (elt) {
-			return (elt.eidot.includes(eidah));
-		})
-		chugim[eidah] = _.pluck(filtered, 'name')
-	})
-	return chugim
+	return _.reduce(["aleph", "vav", "bet", "gimmel", "daled"], (memo, eidah) => {
+		memo[eidah] = _.pluck(session.chugim.filter(elt => elt.eidot.includes(eidah)), 'name')
+		return memo
+	}, {})
 }
 
 

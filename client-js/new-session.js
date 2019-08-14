@@ -71,25 +71,24 @@ $("#new-session-form").submit((e) => {
     data = {
         year: parseInt($("#year").val()),
         session: $("input[name=\"session\"]:checked").val(),
-        bunks: _.mapObject(
-            _.indexBy(
-                _.reduce(ctxt.eidot, (memo, eidah) =>
-                    memo.concat({
-                        eidah: eidah,
-                        bunks: _.map($(`.${eidah}`), ele => ele.value)
-                    }),
-                    []),
-                'eidah'),
-            obj => obj.bunks),
-        chugim: _.map(
-            $("#chug-container").contents(), chug => ({
-                name: $(chug).find("#name").val(),
-                popularity: parseFloat($(chug).find("#pop").val()),
-                capacity: parseInt($(chug).find("#cap").val()),
-                eidot: _.uniq(
-                    _.reduce($(chug).find("input.eidot:checked"), (memo, eidah) =>
-                        memo.concat(eidah.value.split(',')), []))
-            }))
+        bunks: _(ctxt.eidot).chain()
+            .reduce((memo, eidah) =>
+                memo.concat({
+                    eidah: eidah,
+                    bunks: _.map($(`.${eidah}`), ele => ele.value)
+                }), [])
+            .indexBy('eidah')
+            .mapObject(obj => obj.bunks)
+            .value(),
+        chugim: $("#chug-container").contents().map(chug => ({
+            name: $(chug).find("#name").val(),
+            popularity: parseFloat($(chug).find("#pop").val()),
+            capacity: parseInt($(chug).find("#cap").val()),
+            eidot: _($(chug).find("input.eidot:checked")).chain()
+                .reduce($(chug), (memo, eidah) => memo.concat(eidah.value.split(',')), [])
+                .uniq()
+                .value()
+        }))
     }
     // functional programming ftw
 

@@ -20,10 +20,10 @@ var camperSchema = new mongoose.Schema({
 		required: true
 	},
 	prefs: {
-		type: [String],
+		type: [mongoose.Schema.Types.ObjectId],
 		required: true
 	},
-	chug: String,
+	chug: mongoose.Schema.Types.ObjectId,
 	pref_recieved: Number
 })
 
@@ -49,7 +49,7 @@ var chugSchema = new mongoose.Schema({
 		max: 200,
 		required: true
 	},
-	kids: [camperSchema]
+	kids: [mongoose.Schema.Types.ObjectId]
 })
 
 var sessionSchema = new mongoose.Schema({
@@ -93,6 +93,7 @@ var sessionSchema = new mongoose.Schema({
 	},
 	chugim: [chugSchema],
 	campers: [camperSchema],
+	produced: Boolean,
 	lastProduction: Date,
 	tears: [Number],
 	noChug: [camperSchema]

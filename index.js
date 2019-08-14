@@ -483,20 +483,18 @@ app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function 
 
 // Regular Chug form
 function renderChugPage(repeat, req, res) {
-	Session.findOne({ _id: req.params.id, active: true }, function (err, session) {
-		if (!session) return res.redirect('/chugim');
 
-		res.expose(session.bunks, "bunks");
-		res.expose(utils.getChugim(session), "chugim");
-		res.expose(session, "session");
-		res.render('chug-form', {
-			eidot: upperEidot,
-			counter: [1, 2, 3],
-			session: session,
-			repeat: repeat,
-			name: req.body.name
-		});
+	res.expose(session.bunks, "bunks");
+	res.expose(utils.getChugim(session), "chugim");
+	res.expose(session, "session");
+	res.render('chug-form', {
+		eidot: upperEidot,
+		counter: [1, 2, 3],
+		session: session,
+		repeat: repeat,
+		name: req.body.name
 	});
+
 }
 
 app.get("/chugim", function (req, res) {
@@ -512,27 +510,22 @@ app.get("/chugim/:id", function (req, res) {
 });
 
 app.post("/chugim/:id", function (req, res) {
-	Session.findOne({ _id: req.params.id, active: true }, function (err, session) {
+	var camper = req.body
+	var update
+	if (session.lastProduction) {
+		camper.pref_recieved = -1
+		update = { $push: { 'campers': camper, 'noChug': camper } }
+		update['tears'] = session.tears
+		update['tears'][3] += 1;
+	} else {
+		update = { $push: { 'campers': camper } }
+	}
+	Session.findOneAndUpdate({ _id: req.params.id, active: true }, update, function (err, data) {
 		if (err) throw err;
-		if (!session) {
-			return res.send("send a valid session id");
-		}
-		var camper = req.body
-		var update
-		if (session.lastProduction) {
-			camper.pref_recieved = -1
-			update = { $push: { 'campers': camper, 'noChug': camper } }
-			update['tears'] = session.tears
-			update['tears'][3] += 1;
-		} else {
-			update = { $push: { 'campers': camper } }
-		}
-		Session.findOneAndUpdate({ _id: req.params.id, active: true }, update, function (err, data) {
-			if (err) throw err;
 
-			renderChugPage(true, req, res)
-		});
-	})
+		renderChugPage(true, req, res)
+	});
+
 
 });
 
