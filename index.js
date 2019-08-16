@@ -82,7 +82,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 function sessionMiddleware(req, res, next) {
-	if (req.params.id === "session" || req.params.id === "new") return next()
+	if (req.params.id === "session" || req.params.id === "new" || req.params.id === "klugie") return next()
 	Session.findOne({ id: req.params.id }, (err, doc) => {
 		if (err) return utils.sendError(res, http.INTERNAL_SERVER_ERROR, err.message)
 
@@ -94,6 +94,7 @@ function sessionMiddleware(req, res, next) {
 }
 app.use("/chugim/klugie/:id", sessionMiddleware)
 app.use("/chugim/klugie/session/:id", sessionMiddleware)
+app.use("/chugim/:id", sessionMiddleware)
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.use('/static', express.static('static'));
@@ -214,6 +215,49 @@ app.post('/changepassword',
 		});
 	});
 
+/***************
+ * Camper Form *
+ ***************/
+
+// Camper preference entering, ie main chug form
+app.get("/chugim", function (req, res) {
+	Session.find({ active: true }, function (err, sessions) {
+		if (err) return res.status(http.INTERNAL_SERVER_ERROR).send(err.message);
+
+		res.render('chug-select', { sessions: sessions })
+	});
+});
+
+app.get("/chugim/:id", function (req, res) {
+	session = req.currentSession
+
+	res.expose(utils.getChugim(session), "chugim");
+	res.expose(session.id, "sessionID");
+	res.expose(session.bunks, "bunks")
+	res.render('chug-form', {
+		eidot: upperEidot,
+		sessionName: session.name,
+		name: req.query.name
+	});
+});
+
+app.post("/chugim/:id", function (req, res) {
+	session = req.currentSession
+
+	if (_(session.campers).filter(
+		camper =>
+			camper.name.toLowerCase().includes(req.body.name.toLowerCase()) ||
+			req.body.name.toLowerCase.includes(camper.name.toLowerCase())).length) {
+		return res.status(http.BAD_REQUEST).send("camper already entered")
+	}
+
+	Session.findByIdAndUpdate(
+		session._id,
+		{ $push: { 'campers': req.body } },
+		err => err ? res.status(http.INTERNAL_SERVER_ERROR).send(err.message) : res.send("success")
+	)
+});
+
 /************
  * Sessions *
  ************/
@@ -258,7 +302,7 @@ app.post("/chugim/klugie/session/new",
 		session.active = false;
 		session.name = session.year + " " + session.session.toUpperCase();
 
-		(new Session(session)).save((err, doc) => {
+		(new Session(session)).save(err => {
 			if (err) return res.status(http.BAD_REQUEST).send(err.message);
 
 			res.send(session.id);
@@ -480,54 +524,6 @@ app.get("/chugim/klugie/:id/camperlist", ensureLogin.ensureLoggedIn(), function 
 		res.send(csvString);
 	})
 })
-
-// Regular Chug form
-function renderChugPage(repeat, req, res) {
-
-	res.expose(session.bunks, "bunks");
-	res.expose(utils.getChugim(session), "chugim");
-	res.expose(session, "session");
-	res.render('chug-form', {
-		eidot: upperEidot,
-		counter: [1, 2, 3],
-		session: session,
-		repeat: repeat,
-		name: req.body.name
-	});
-
-}
-
-app.get("/chugim", function (req, res) {
-	Session.find({ active: true }, function (err, sessions) {
-		if (err) throw err;
-
-		res.render('chug-select', { sessions: sessions })
-	});
-});
-
-app.get("/chugim/:id", function (req, res) {
-	renderChugPage(false, req, res);
-});
-
-app.post("/chugim/:id", function (req, res) {
-	var camper = req.body
-	var update
-	if (session.lastProduction) {
-		camper.pref_recieved = -1
-		update = { $push: { 'campers': camper, 'noChug': camper } }
-		update['tears'] = session.tears
-		update['tears'][3] += 1;
-	} else {
-		update = { $push: { 'campers': camper } }
-	}
-	Session.findOneAndUpdate({ _id: req.params.id, active: true }, update, function (err, data) {
-		if (err) throw err;
-
-		renderChugPage(true, req, res)
-	});
-
-
-});
 
 // API
 app.get('/api/chugim/:id/campers', function (req, res) {

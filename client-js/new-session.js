@@ -74,18 +74,18 @@ $("#new-session-form").submit((e) => {
         bunks: _(ctxt.eidot).chain()
             .reduce((memo, eidah) =>
                 memo.concat({
-                    eidah: eidah,
-                    bunks: _.map($(`.${eidah}`), ele => ele.value)
+                    eidah: eidah.toLowerCase(),
+                    bunks: _.map($(`.${eidah}`), ele => ele.value.trim())
                 }), [])
             .indexBy('eidah')
             .mapObject(obj => obj.bunks)
             .value(),
-        chugim: $("#chug-container").contents().map(chug => ({
-            name: $(chug).find("#name").val(),
+        chugim: _($("#chug-container").contents()).map(chug => ({
+            name: $(chug).find("#name").val().trim(),
             popularity: parseFloat($(chug).find("#pop").val()),
             capacity: parseInt($(chug).find("#cap").val()),
             eidot: _($(chug).find("input.eidot:checked")).chain()
-                .reduce($(chug), (memo, eidah) => memo.concat(eidah.value.split(',')), [])
+                .reduce((memo, eidah) => memo.concat(eidah.value.split(',')), [])
                 .uniq()
                 .value()
         }))

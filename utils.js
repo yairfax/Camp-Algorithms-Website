@@ -3,11 +3,21 @@ var _ = require('underscore');
 var capitalize = require('capitalize');
 
 function getChugim(session) {
-	// For each chug, calculate eidot with that chug and put into that array in the object
-	return _.reduce(["aleph", "vav", "bet", "gimmel", "daled"], (memo, eidah) => {
-		memo[eidah] = _.pluck(session.chugim.filter(elt => elt.eidot.includes(eidah)), 'name')
-		return memo
-	}, {})
+	return _(session.chugim).chain()
+		.map(chug => // map each chug to a list of [{chug, eidah},{chug, eidah}]
+			_(chug.eidot).map(eidah => ({
+				name: chug.name,
+				eidah: eidah,
+				_id: chug._id
+			})))
+		.flatten() // flatten into one list
+		.groupBy(chugRecord => chugRecord.eidah) // turn into object
+		.mapObject(eidahGroup =>
+			_(eidahGroup).map(chug => ({ // turn eidah into exclusive key
+				name: chug.name,
+				_id: chug._id
+			})))
+		.value()
 }
 
 

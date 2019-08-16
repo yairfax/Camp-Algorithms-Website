@@ -1,18 +1,18 @@
-<title>Camper Entry Form: {{session.name}}</title>
+<title>Camper Entry Form: {{sessionName}}</title>
 <h1 style="text-align: center">Please fill out all of your chug preference information</h1>
 
 <!--Alert for repeated camper entering-->
-{{#if repeat}}
+{{#if name}}
 <div class="alert alert-success" role="alert">
-  <h4 class="alert-heading">Response Recorded</h4>
-  <p>Your response for {{name}} was recorded, please enter another camper's info.</p>
+	<h4 class="alert-heading">Response Recorded</h4>
+	<p>Your response for {{name}} was recorded, please enter another camper's info.</p>
 </div>
 {{/if}}
 
 <label><b>Note:</b> If you filled out the preference sheet for this camper before and need to make changes, <b><i>DO NOT</i></b> fill out this form again. Please see the rosh sports to make changes.</label>
 
 <!--Main form-->
-<form method="POST" action="/chugim/{{session._id}}" id="chug-form">
+<form id="chug-form">
 	<div class="form-group">
 		<label for="name">Name</label>
 		<input type="text" class="form-control" placeholder="Name" name="name" id="name" required>
@@ -37,113 +37,25 @@
 	</div>
 	<div class="form-group">
 		<label for='bunk'>Bunk</label>
-		<select class="custom-select" required id="bunk-select" name="bunk"></select>
+		<select class="custom-select" required id="bunk" name="bunk"></select>
 	</div>
-	{{#each counter}}
 	<div class="form-group">
-		<label for="prefs">Select Number {{this}} Preference</label>
+		<label for="prefs">Select Number 1 Preference</label>
 		<select class="custom-select pref" required name="prefs"></select>
 		<div class='invalid-feedback'>Please select separate chugim!</div>
 	</div>
-	{{/each}}
+	<div class="form-group">
+		<label for="prefs">Select Number 2 Preference</label>
+		<select class="custom-select pref" required name="prefs"></select>
+		<div class='invalid-feedback'>Please select separate chugim!</div>
+	</div>
+	<div class="form-group">
+		<label for="prefs">Select Number 3 Preference</label>
+		<select class="custom-select pref" required name="prefs"></select>
+		<div class='invalid-feedback'>Please select separate chugim!</div>
+	</div>
+
 	<div style="padding-bottom: 25px"><button type="submit" class="btn btn-primary">Submit</button></div>
 </form>
 
-<script>
-	var eidah = "";
-	// reset bunk and chug list when eidah is clicked
-	$(".eidah").on('click', function() {
-		if (eidah != $(this).val()) {
-			eidah = $(this).val()
-
-			// Create bunk list
-			$("#bunk-select").empty();
-			$("#bunk-select").append(`<option selected disabled value="">Select Bunk</option>`)
-			for (var bunk of ctxt.bunks[eidah]) {
-				$("#bunk-select").append(`<option value="${bunk}">${bunk}</option>`)
-			}
-
-			//Populate Chug List
-			for (var row of $(".pref")) {
-					$(row).empty()
-					$(row).append(`<option disabled selected value="">Select Preference</option>`)
-			}
-			for (var chug of ctxt.chugim[eidah]) {
-				$(`.pref`).append(`<option value="${chug}">${chug}</option>`)
-			}
-		}
-	});
-
-	function sameIndeces(arr) {
-		for (var i = 0; i < arr.length - 1; i++) {
-			for (var j = i + 1; j < arr.length; j++) {
-				if (arr[i] === arr[j]) return [i, j]
-			}
-		}
-		return undefined;
-	}
-
-	// function to dynamically pull camper list and check if camper exists
-	function camperExists(name) {
-		var ret = false;
-		$.ajax({
-			url:`/api/chugim/${ctxt.session._id}/campers`,
-			success: function(data) {
-				for (var camper of data) {
-					if (camper.name.toLowerCase().match(new RegExp(name.toLowerCase())) || name.toLowerCase().match(new RegExp (camper.name.toLowerCase()))) ret = true;
-				}
-			},
-			async: false
-		})	
-		return ret
-	}
-
-	var initText = $("#name-feedback").text();
-
-	$("#chug-form").submit(function(event) {
-		$("#name-feedback").text(initText);
-		var arr = []
-		// get preference values to see if they're the same
-		for (var i = 0; i < 3; i++) {
-			arr.push($(".pref")[i].value)
-		}
-		var inds = sameIndeces(arr)
-
-		// If they are the same, set those boxes to invalid
-		if (inds) {
-			$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).addClass("is-invalid")
-			
-			$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).on('click', function() {
-				$([$(".pref")[inds[0]],$(".pref")[inds[1]]]).removeClass('is-invalid')
-			})
-
-			event.preventDefault()
-		}
-
-		// illegal characters
-		if ($("#name").val().match(/[\(\)]/)) {
-			$("#name-feedback").text(`Invalid character: ${$("#name").val().match(/[\(\)]/)[0]}`);
-
-			$("#name").addClass('is-invalid');
-			$("#name").focus();
-
-			$("#name").on('click', function() {
-				$("#name").removeClass('is-invalid');
-				$("#name-feedback").text(initText);
-			})
-			event.preventDefault()
-		}
-
-		// If camper exists already. Returns true not just for strict eqaulity
-		if (camperExists($("#name").val())) {
-			$("#name").addClass('is-invalid');
-			$("#name").focus();
-
-			$("#name").on('click', function() {
-				$("#name").removeClass('is-invalid');
-			})
-			event.preventDefault()
-		}
-
-	});
-</script>
+<script src="/js/chug-form.js"></script>
