@@ -25,7 +25,8 @@ const utils = require('./utils');
 const saltRounds = 10;
 const PORT = 3000;
 const lowerEidot = ['aleph', 'vav', 'bet', 'gimmel', 'daled'];
-const upperEidot = _.map(lowerEidot, utils.titleCase)
+const upperEidot = _.map(lowerEidot, utils.titleCase);
+const updateOpts = { runValidators: true, context: 'query' };
 
 const app = express();
 
@@ -244,16 +245,10 @@ app.get("/chugim/:id", function (req, res) {
 app.post("/chugim/:id", function (req, res) {
 	session = req.currentSession
 
-	if (_(session.campers).filter(
-		camper =>
-			camper.name.toLowerCase().includes(req.body.name.toLowerCase()) ||
-			req.body.name.toLowerCase.includes(camper.name.toLowerCase())).length) {
-		return res.status(http.BAD_REQUEST).send("camper already entered")
-	}
-
 	Session.findByIdAndUpdate(
 		session._id,
 		{ $push: { 'campers': req.body } },
+		updateOpts,
 		err => err ? res.status(http.INTERNAL_SERVER_ERROR).send(err.message) : res.send("success")
 	)
 });

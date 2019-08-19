@@ -1,9 +1,10 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
+const _ = require('underscore')
 
 var camperSchema = new mongoose.Schema({
 	name: {
 		type: String,
-		required: true
+		required: true,
 	},
 	eidah: {
 		type: String,
@@ -92,7 +93,28 @@ var sessionSchema = new mongoose.Schema({
 		required: true
 	},
 	chugim: [chugSchema],
-	campers: [camperSchema],
+	campers: {
+		type: [camperSchema],
+		validate: {
+			isAsync: true,
+			validator: function (v, cb) {
+				var id = this.getQuery()
+				var update = this.getUpdate()
+				Session.findById(id, { campers: 1, _id: 0 }, (err, doc) => {
+					if (err) return cb(err)
+
+					if (_(doc.campers).filter(
+						camper =>
+							camper.name.toLowerCase().includes(update.$push.campers.name.toLowerCase()) ||
+							update.$push.campers.name.toLowerCase().includes(camper.name.toLowerCase())).length > 0) {
+						return cb(false, "camper already entered")
+					}
+
+					cb()
+				})
+			}
+		}
+	},
 	produced: Boolean,
 	lastProduction: Date,
 	tears: [Number],
