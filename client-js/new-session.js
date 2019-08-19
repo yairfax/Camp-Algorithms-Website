@@ -100,7 +100,7 @@ $("#new-session-form").submit((e) => {
         success: (session) => window.location.replace(`/chugim/klugie/${session}`),
         error: (err) => {
             if (err.responseText.includes("session already exists")) {
-                $("#year").addClass('is-invalid')
+                registerTemporaryClass("#year", "is-invalid")
             } else {
                 alert(err.responseText)
             }
