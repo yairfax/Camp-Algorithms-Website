@@ -23,7 +23,7 @@ var createArrayCSVStringifier = require('csv-writer').createArrayCsvStringifier;
 
 //MongoDB
 dotenv.load()
-mongoose.connect(process.env.MONGODB, { useNewUrlParser: true })
+mongoose.connect(process.env.MONGODB, { useNewUrlParser: true, useUnifiedTopology: true })
 mongoose.connection.on('error', function(err) {
 	console.log("Connection to database was unable to take place")
 	process.exit(1);
