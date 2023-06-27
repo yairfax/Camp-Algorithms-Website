@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/yairfax/Camp-Algorithms-Website#readme",
   "dependencies": {
+    "@handlebars/allow-prototype-access": "^1.0.5",
     "axios": "^1.4.0",
     "bcrypt": "^5.0.1",
     "capitalize": "^2.0.0",
