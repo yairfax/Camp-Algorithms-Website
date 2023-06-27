@@ -20,6 +20,9 @@ var User = require('./models/User.js');
 var driver = require('./driver');
 var createCSVStringifier = require('csv-writer').createObjectCsvStringifier;
 var createArrayCSVStringifier = require('csv-writer').createArrayCsvStringifier;
+const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access')
+const Handlebars = require('handlebars')
+
 
 //MongoDB
 dotenv.load()
@@ -37,7 +40,8 @@ var hbs = exphbs.create({
 		length: _.size,
 		titleCase: utils.titleCase},
 	defaultLayout: 'main',
-	partialsDir: "views/partials/"
+	partialsDir: "views/partials/",
+	handlebars: allowInsecurePrototypeAccess(Handlebars)
 })
 app.use(logger('dev'));
 app.use(bodyParser.json());
